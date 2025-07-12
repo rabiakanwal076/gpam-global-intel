@@ -2,41 +2,87 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* GPAM.site Financial Dashboard Design System */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
+    /* Core Brand Colors */
+    --background: 0 0% 99%;
+    --foreground: 220 25% 15%;
+    
+    /* Financial Data Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --danger: 0 84% 60%;
+    --danger-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 220 25% 15%;
+    
+    /* Professional UI */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
+    --card-foreground: 220 25% 15%;
+    --card-border: 220 13% 91%;
+    
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
+    --popover-foreground: 220 25% 15%;
+    
+    /* Brand Primary - Financial Blue */
+    --primary: 220 91% 28%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 220 91% 85%;
+    --primary-dark: 220 91% 18%;
+    
+    /* Secondary - Professional Gray */
+    --secondary: 220 13% 96%;
+    --secondary-foreground: 220 25% 25%;
+    --secondary-dark: 220 13% 86%;
+    
+    /* Neutral Tones */
+    --muted: 220 13% 95%;
+    --muted-foreground: 220 9% 46%;
+    --muted-dark: 220 13% 85%;
+    
+    /* Accent - Golden Highlight */
+    --accent: 45 93% 47%;
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 45 93% 85%;
+    
+    /* Interactive Elements */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Borders & Inputs */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 220 91% 28%;
+    
+    /* Chart Colors */
+    --chart-1: 220 91% 28%;  /* Primary Blue */
+    --chart-2: 142 76% 36%;  /* Success Green */
+    --chart-3: 0 84% 60%;    /* Danger Red */
+    --chart-4: 45 93% 47%;   /* Accent Gold */
+    --chart-5: 280 100% 70%; /* Purple */
+    --chart-6: 160 60% 45%;  /* Teal */
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(220 91% 28%), hsl(220 91% 40%));
+    --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 48%));
+    --gradient-danger: linear-gradient(135deg, hsl(0 84% 60%), hsl(0 84% 70%));
+    --gradient-accent: linear-gradient(135deg, hsl(45 93% 47%), hsl(45 93% 57%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(220 13% 98%));
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(220 13% 85% / 0.05);
+    --shadow: 0 1px 3px 0 hsl(220 13% 85% / 0.1), 0 1px 2px 0 hsl(220 13% 85% / 0.06);
+    --shadow-md: 0 4px 6px -1px hsl(220 13% 85% / 0.1), 0 2px 4px -1px hsl(220 13% 85% / 0.06);
+    --shadow-lg: 0 10px 15px -3px hsl(220 13% 85% / 0.1), 0 4px 6px -2px hsl(220 13% 85% / 0.05);
+    --shadow-financial: 0 8px 30px hsl(220 91% 28% / 0.12);
+    
+    /* Animation */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -100,6 +146,86 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  
+  /* Financial Dashboard Utilities */
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-success {
+    background: var(--gradient-success);
+  }
+  
+  .gradient-danger {
+    background: var(--gradient-danger);
+  }
+  
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+  
+  .shadow-financial {
+    box-shadow: var(--shadow-financial);
+  }
+  
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+  
+  /* Price Change Indicators */
+  .price-up {
+    @apply text-success;
+  }
+  
+  .price-down {
+    @apply text-danger;
+  }
+  
+  .price-neutral {
+    @apply text-muted-foreground;
+  }
+}
+
+@layer components {
+  /* Financial Card Component */
+  .financial-card {
+    @apply bg-card border border-card-border rounded-xl p-6 shadow-md hover:shadow-lg transition-smooth;
+  }
+  
+  .financial-card-header {
+    @apply flex items-center justify-between mb-4;
+  }
+  
+  /* Market Status Indicators */
+  .market-indicator {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .market-indicator.bullish {
+    @apply bg-success/10 text-success border border-success/20;
+  }
+  
+  .market-indicator.bearish {
+    @apply bg-danger/10 text-danger border border-danger/20;
+  }
+  
+  .market-indicator.neutral {
+    @apply bg-muted text-muted-foreground border border-border;
+  }
+  
+  /* Chart Containers */
+  .chart-container {
+    @apply bg-card rounded-lg p-4 border border-card-border;
+  }
+  
+  /* Navigation Styles */
+  .nav-link {
+    @apply text-muted-foreground hover:text-foreground transition-smooth font-medium;
+  }
+  
+  .nav-link.active {
+    @apply text-primary;
   }
 }
