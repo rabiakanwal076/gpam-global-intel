@@ -9,7 +9,7 @@ import { Dashboard } from "@/pages/Dashboard";
 import { Prices } from "@/pages/Prices";
 import { Policies } from "@/pages/Policies";
 import { Calculators } from "@/pages/Calculators";
-import NotFound from "./pages/NotFound";
+import { NotFound } from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 

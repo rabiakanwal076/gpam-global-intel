@@ -1,27 +1,59 @@
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { Link } from 'react-router-dom';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
+import { Button } from '@/components/ui/button';
+import { Home, ArrowLeft, Search } from 'lucide-react';
 
-const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
-  }, [location.pathname]);
-
+export function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </a>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Header />
+      
+      <main className="container mx-auto px-4 py-16">
+        <div className="max-w-md mx-auto text-center space-y-6">
+          <div className="space-y-4">
+            <h1 className="text-8xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              404
+            </h1>
+            <h2 className="text-2xl font-semibold">Page Not Found</h2>
+            <p className="text-muted-foreground">
+              The page you're looking for doesn't exist or has been moved.
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button asChild>
+              <Link to="/">
+                <Home className="h-4 w-4 mr-2" />
+                Go Home
+              </Link>
+            </Button>
+            <Button variant="outline" onClick={() => window.history.back()}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Go Back
+            </Button>
+          </div>
+          
+          <div className="pt-8">
+            <p className="text-sm text-muted-foreground mb-4">
+              Popular sections:
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/prices">Real-Time Prices</Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/policies">Global Policies</Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/calculators">Financial Tools</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </main>
+      
+      <Footer />
     </div>
   );
-};
-
-export default NotFound;
+}

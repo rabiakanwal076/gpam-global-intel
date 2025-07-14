@@ -1,363 +1,287 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Newspaper, 
-  Search, 
-  Filter, 
-  Clock,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Globe,
-  AlertTriangle
-} from "lucide-react";
+import { useState } from 'react';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Globe, Calendar, Filter, TrendingUp, TrendingDown, AlertTriangle, Info } from 'lucide-react';
 
-interface PolicyUpdate {
-  id: number;
-  country: string;
-  flag: string;
-  title: string;
-  summary: string;
-  impact: 'Bullish' | 'Bearish' | 'Neutral';
-  category: string;
-  timestamp: string;
-  source: string;
-}
-
-const samplePolicies: PolicyUpdate[] = [
+// Mock policy data
+const mockPolicies = [
   {
     id: 1,
+    title: "Federal Reserve Announces Interest Rate Decision",
     country: "United States",
     flag: "🇺🇸",
-    title: "Federal Reserve maintains interest rates at 5.25-5.50%",
-    summary: "The Federal Open Market Committee voted to keep the federal funds rate unchanged, citing continued progress on inflation while monitoring labor market conditions.",
-    impact: "Neutral",
     category: "Monetary Policy",
-    timestamp: "2 hours ago",
-    source: "Federal Reserve"
+    impact: "high",
+    date: "2024-01-15",
+    summary: "Fed maintains rates at 5.25-5.50% citing inflation concerns and economic stability. Markets react positively to dovish stance.",
+    source: "Federal Reserve",
+    tags: ["Interest Rates", "Inflation", "USD"]
   },
   {
     id: 2,
+    title: "European Central Bank Digital Currency Initiative",
     country: "European Union",
     flag: "🇪🇺",
-    title: "European Parliament approves comprehensive crypto regulation framework",
-    summary: "MiCA (Markets in Crypto-Assets) regulation officially approved, establishing clear guidelines for cryptocurrency operations across EU member states.",
-    impact: "Bullish",
-    category: "Cryptocurrency",
-    timestamp: "4 hours ago",
-    source: "European Parliament"
+    category: "Digital Currency",
+    impact: "medium",
+    date: "2024-01-14",
+    summary: "ECB accelerates digital euro development with pilot programs across member states. Banking sector shows mixed reactions.",
+    source: "European Central Bank",
+    tags: ["CBDC", "Digital Euro", "Banking"]
   },
   {
     id: 3,
-    country: "Japan",
-    flag: "🇯🇵",
-    title: "Bank of Japan maintains ultra-low interest rate policy",
-    summary: "BOJ keeps short-term interest rates at -0.1% and continues bond purchasing program to support economic recovery amid global uncertainties.",
-    impact: "Bearish",
-    category: "Monetary Policy",
-    timestamp: "6 hours ago",
-    source: "Bank of Japan"
+    title: "China Announces New Cryptocurrency Regulations",
+    country: "China",
+    flag: "🇨🇳",
+    category: "Crypto Regulation",
+    impact: "high",
+    date: "2024-01-13",
+    summary: "Stricter compliance requirements for crypto exchanges. Bitcoin and major altcoins see immediate price volatility.",
+    source: "People's Bank of China",
+    tags: ["Crypto", "Regulation", "Bitcoin"]
   },
   {
     id: 4,
-    country: "China",
-    flag: "🇨🇳",
-    title: "China announces new infrastructure investment package",
-    summary: "Beijing unveils $500 billion infrastructure spending plan focusing on renewable energy, high-speed rail, and digital infrastructure development.",
-    impact: "Bullish",
-    category: "Fiscal Policy",
-    timestamp: "8 hours ago",
-    source: "State Council"
+    title: "UK Introduces New Corporate Tax Framework",
+    country: "United Kingdom",
+    flag: "🇬🇧",
+    category: "Tax Policy",
+    impact: "medium",
+    date: "2024-01-12",
+    summary: "New tax incentives for green energy investments. FTSE 100 renewable energy stocks surge following announcement.",
+    source: "HM Treasury",
+    tags: ["Tax", "Green Energy", "FTSE"]
   },
   {
     id: 5,
-    country: "United Kingdom",
-    flag: "🇬🇧",
-    title: "UK Treasury introduces new digital asset taxation framework",
-    summary: "HM Treasury publishes detailed guidance on cryptocurrency taxation, including clear rules for DeFi activities and NFT transactions.",
-    impact: "Neutral",
-    category: "Taxation",
-    timestamp: "12 hours ago",
-    source: "HM Treasury"
-  },
-  {
-    id: 6,
-    country: "India",
-    flag: "🇮🇳",
-    title: "Reserve Bank of India cuts repo rate by 0.25%",
-    summary: "RBI reduces the benchmark repo rate to 6.25% to stimulate economic growth while maintaining inflation targeting within acceptable range.",
-    impact: "Bullish",
+    title: "Japan's Central Bank Maintains Ultra-Low Rates",
+    country: "Japan",
+    flag: "🇯🇵",
     category: "Monetary Policy",
-    timestamp: "1 day ago",
-    source: "Reserve Bank of India"
+    impact: "low",
+    date: "2024-01-11",
+    summary: "Bank of Japan keeps negative interest rate policy unchanged. Yen weakens against major currencies.",
+    source: "Bank of Japan",
+    tags: ["Interest Rates", "JPY", "Currency"]
   }
 ];
 
+const impactColors = {
+  high: "bg-danger/10 text-danger border-danger/20",
+  medium: "bg-warning/10 text-warning border-warning/20",
+  low: "bg-success/10 text-success border-success/20"
+};
+
+const impactIcons = {
+  high: AlertTriangle,
+  medium: Info,
+  low: TrendingUp
+};
+
 export function Policies() {
-  const [policies, setPolicies] = useState<PolicyUpdate[]>(samplePolicies);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCountry, setSelectedCountry] = useState<string>("all");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedImpact, setSelectedImpact] = useState('all');
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const getImpactIcon = (impact: string) => {
-    switch (impact) {
-      case 'Bullish':
-        return <TrendingUp className="h-4 w-4" />;
-      case 'Bearish':
-        return <TrendingDown className="h-4 w-4" />;
-      default:
-        return <Minus className="h-4 w-4" />;
-    }
-  };
-
-  const getImpactColor = (impact: string) => {
-    switch (impact) {
-      case 'Bullish':
-        return "border-success text-success bg-success/10";
-      case 'Bearish':
-        return "border-danger text-danger bg-danger/10";
-      default:
-        return "border-muted-foreground text-muted-foreground bg-muted/10";
-    }
-  };
-
-  const filteredPolicies = policies.filter(policy => {
+  const filteredPolicies = mockPolicies.filter(policy => {
     const matchesSearch = policy.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         policy.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         policy.country.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCountry = selectedCountry === "all" || policy.country === selectedCountry;
-    const matchesCategory = selectedCategory === "all" || policy.category === selectedCategory;
+                         policy.summary.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCountry = selectedCountry === 'all' || policy.country === selectedCountry;
+    const matchesCategory = selectedCategory === 'all' || policy.category === selectedCategory;
+    const matchesImpact = selectedImpact === 'all' || policy.impact === selectedImpact;
     
-    return matchesSearch && matchesCountry && matchesCategory;
+    return matchesSearch && matchesCountry && matchesCategory && matchesImpact;
   });
 
-  const countries = Array.from(new Set(policies.map(p => p.country)));
-  const categories = Array.from(new Set(policies.map(p => p.category)));
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
-          <div className="space-y-6">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i} className="financial-card">
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div className="h-4 bg-muted animate-pulse rounded w-3/4"></div>
-                    <div className="h-3 bg-muted animate-pulse rounded w-1/2"></div>
-                    <div className="h-3 bg-muted animate-pulse rounded w-full"></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const countries = [...new Set(mockPolicies.map(p => p.country))];
+  const categories = [...new Set(mockPolicies.map(p => p.category))];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-card border-b border-card-border">
-        <div className="container mx-auto px-4 py-8">
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Newspaper className="h-8 w-8 text-primary" />
+      <Header />
+      
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Hero Section */}
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            Global Policy Intelligence
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Real-time analysis of economic policies and their market impact across major economies
+          </p>
+        </div>
+
+        {/* Filters */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filter Policies
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-foreground">Global Economic Policy Feed</h1>
-                <p className="text-muted-foreground">
-                  AI-powered summaries of economic policies from around the world
-                </p>
-              </div>
-            </div>
-            
-            {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <label className="text-sm font-medium mb-2 block">Search</label>
                 <Input
                   placeholder="Search policies..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
                 />
               </div>
               
-              <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Countries" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Countries</SelectItem>
-                  {countries.map(country => (
-                    <SelectItem key={country} value={country}>{country}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Country</label>
+                <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Countries" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Countries</SelectItem>
+                    {countries.map(country => (
+                      <SelectItem key={country} value={country}>{country}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map(category => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Category</label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map(category => (
+                      <SelectItem key={category} value={category}>{category}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               
-              <Button variant="outline" className="w-full">
-                <Filter className="mr-2 h-4 w-4" />
-                Advanced Filters
-              </Button>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Impact Level</label>
+                <Select value={selectedImpact} onValueChange={setSelectedImpact}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Impact Levels" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Levels</SelectItem>
+                    <SelectItem value="high">High Impact</SelectItem>
+                    <SelectItem value="medium">Medium Impact</SelectItem>
+                    <SelectItem value="low">Low Impact</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="financial-card">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Globe className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Updates</p>
-                  <p className="text-2xl font-bold text-foreground">{policies.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="financial-card">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5 text-success" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Bullish Policies</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {policies.filter(p => p.impact === 'Bullish').length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="financial-card">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <TrendingDown className="h-5 w-5 text-danger" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Bearish Policies</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {policies.filter(p => p.impact === 'Bearish').length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="financial-card">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Clock className="h-5 w-5 text-accent" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Today</p>
-                  <p className="text-2xl font-bold text-foreground">12</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Policy Feed */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-foreground">
-              Policy Updates ({filteredPolicies.length})
-            </h2>
-            <Badge variant="outline" className="text-xs">
-              AI-Generated Summaries
-            </Badge>
-          </div>
+        <Tabs defaultValue="latest" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="latest">Latest</TabsTrigger>
+            <TabsTrigger value="high-impact">High Impact</TabsTrigger>
+            <TabsTrigger value="trending">Trending</TabsTrigger>
+            <TabsTrigger value="analysis">AI Analysis</TabsTrigger>
+          </TabsList>
           
-          {filteredPolicies.length === 0 ? (
-            <Card className="financial-card">
-              <CardContent className="p-8 text-center">
-                <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">No policies found</h3>
-                <p className="text-muted-foreground">
-                  Try adjusting your search filters to see more results.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {filteredPolicies.map((policy) => (
-                <Card key={policy.id} className="financial-card hover:shadow-financial">
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      {/* Header */}
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center space-x-3">
-                          <span className="text-2xl">{policy.flag}</span>
-                          <div>
-                            <h3 className="font-semibold text-foreground">{policy.country}</h3>
-                            <p className="text-sm text-muted-foreground">{policy.timestamp}</p>
+          <TabsContent value="latest" className="space-y-4">
+            <div className="grid gap-4">
+              {filteredPolicies.map((policy) => {
+                const ImpactIcon = impactIcons[policy.impact];
+                return (
+                  <Card key={policy.id} className="hover:shadow-lg transition-smooth">
+                    <CardContent className="p-6">
+                      <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                              <span className="text-2xl">{policy.flag}</span>
+                              <div>
+                                <h3 className="font-semibold text-lg">{policy.title}</h3>
+                                <p className="text-sm text-muted-foreground">{policy.country} • {policy.source}</p>
+                              </div>
+                            </div>
+                            <Badge className={impactColors[policy.impact]} variant="outline">
+                              <ImpactIcon className="h-3 w-3 mr-1" />
+                              {policy.impact.toUpperCase()}
+                            </Badge>
+                          </div>
+                          
+                          <p className="text-muted-foreground leading-relaxed">
+                            {policy.summary}
+                          </p>
+                          
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant="secondary">{policy.category}</Badge>
+                            {policy.tags.map(tag => (
+                              <Badge key={tag} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="outline" className="text-xs">
-                            {policy.category}
-                          </Badge>
-                          <Badge 
-                            variant="outline" 
-                            className={`text-xs ${getImpactColor(policy.impact)}`}
-                          >
-                            <span className="mr-1">{getImpactIcon(policy.impact)}</span>
-                            {policy.impact}
-                          </Badge>
+                        
+                        <div className="flex lg:flex-col items-center lg:items-end gap-2 lg:text-right">
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            {new Date(policy.date).toLocaleDateString()}
+                          </div>
+                          <Button variant="outline" size="sm">
+                            View Details
+                          </Button>
                         </div>
                       </div>
-                      
-                      {/* Content */}
-                      <div>
-                        <h4 className="font-medium text-foreground mb-2">{policy.title}</h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {policy.summary}
-                        </p>
-                      </div>
-                      
-                      {/* Footer */}
-                      <div className="flex items-center justify-between pt-2 border-t border-card-border">
-                        <span className="text-xs text-muted-foreground">
-                          Source: {policy.source}
-                        </span>
-                        <Button variant="ghost" size="sm">
-                          View Details
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
-          )}
-        </div>
-      </div>
+          </TabsContent>
+          
+          <TabsContent value="high-impact" className="space-y-4">
+            <div className="text-center py-8">
+              <AlertTriangle className="h-12 w-12 text-danger mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">High Impact Policies</h3>
+              <p className="text-muted-foreground">
+                Showing policies with significant market impact potential
+              </p>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="trending" className="space-y-4">
+            <div className="text-center py-8">
+              <TrendingUp className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Trending Policies</h3>
+              <p className="text-muted-foreground">
+                Most discussed policies in financial markets
+              </p>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="analysis" className="space-y-4">
+            <div className="text-center py-8">
+              <Globe className="h-12 w-12 text-accent mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">AI-Powered Analysis</h3>
+              <p className="text-muted-foreground">
+                Deep insights and correlations powered by artificial intelligence
+              </p>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </main>
+      
+      <Footer />
     </div>
   );
 }

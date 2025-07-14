@@ -274,7 +274,7 @@ export const Dashboard = () => {
                 <CardDescription>7-day performance overview across major asset classes</CardDescription>
               </CardHeader>
               <CardContent>
-                <SimpleChart data={mockMarketData} />
+                <SimpleChart data={mockMarketData} dataKey="btc" />
                 <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-border">
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Best Performer</p>
