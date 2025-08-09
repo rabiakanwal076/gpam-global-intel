@@ -5,9 +5,11 @@ import { SimpleChart } from "@/components/ui/simple-chart";
 import { TrendingUp, Globe, DollarSign, Activity, AlertTriangle, Newspaper, MapPin, Briefcase, BarChart3, TrendingDown, Plus, ArrowRight, Bitcoin, Fuel, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { useTopMovers } from "@/hooks/use-stocks";
+import { useTopMovers, useSymbolSearch, useIntraday } from "@/hooks/use-stocks";
+import { useState } from "react";
 
 // Sample market data
 const mockMarketData = [
@@ -37,6 +39,10 @@ export const Dashboard = () => {
   });
   const { data: gainers = [], isLoading: loadingGainers } = useTopMovers('gainers');
   const { data: losers = [], isLoading: loadingLosers } = useTopMovers('losers');
+  const [query, setQuery] = useState('');
+  const [selectedSymbol, setSelectedSymbol] = useState('AAPL');
+  const { data: searchResults = [] } = useSymbolSearch(query);
+  const { data: intraday = [] } = useIntraday(selectedSymbol, '5min');
 
   return (
     <div className="min-h-screen bg-background">
@@ -298,10 +304,109 @@ export const Dashboard = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Stocks — Top Movers */}
+            <Card className="financial-card border-0 shadow-financial">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <BarChart3 className="h-6 w-6 text-primary" />
+                  </div>
+                  Stocks — Top Movers
+                </CardTitle>
+                <CardDescription>Live stock market gainers and losers (1m refresh)</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="text-sm font-medium mb-3">Top Gainers</h4>
+                    <div className="space-y-3">
+                      {(loadingGainers ? Array.from({ length: 5 }) : gainers.slice(0, 5)).map((item: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-success/5 border border-success/10">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{loadingGainers ? '—' : item.symbol}</p>
+                            <p className="text-xs text-muted-foreground">{loadingGainers ? 'Loading…' : (item.name || '')}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold">{loadingGainers ? '—' : `$${(item.price ?? 0).toFixed(2)}`}</p>
+                            <p className="text-xs text-success">{loadingGainers ? '—' : `${(item.changesPercentage ?? 0).toFixed(2)}%`}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium mb-3">Top Losers</h4>
+                    <div className="space-y-3">
+                      {(loadingLosers ? Array.from({ length: 5 }) : losers.slice(0, 5)).map((item: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-danger/5 border border-danger/10">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{loadingLosers ? '—' : item.symbol}</p>
+                            <p className="text-xs text-muted-foreground">{loadingLosers ? 'Loading…' : (item.name || '')}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold">{loadingLosers ? '—' : `$${(item.price ?? 0).toFixed(2)}`}</p>
+                            <p className="text-xs text-danger">{loadingLosers ? '—' : `${(item.changesPercentage ?? 0).toFixed(2)}%`}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Enhanced Right Column */}
           <div className="space-y-6">
+            {/* Stock Lookup */}
+            <Card className="financial-card border-0 shadow-financial">
+              <CardHeader>
+                <CardTitle className="text-lg">Stock Lookup</CardTitle>
+                <CardDescription>Search symbols and view intraday trend</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Input
+                      placeholder="Search symbols (e.g., AAPL, MSFT, TSLA)..."
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      aria-label="Search stock symbols"
+                    />
+                    {query && searchResults.length > 0 && (
+                      <div className="mt-2 border rounded-lg bg-card shadow-financial divide-y max-h-60 overflow-auto">
+                        {searchResults.slice(0, 6).map((r: any, i: number) => (
+                          <button
+                            key={`${r.symbol}-${i}`}
+                            className="w-full text-left px-3 py-2 hover:bg-muted/50"
+                            onClick={() => { setSelectedSymbol(r.symbol); setQuery(''); }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{r.symbol}</span>
+                              <span className="text-xs text-muted-foreground">{r.region || ''}</span>
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">{r.name}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">Selected:</span>
+                      <Badge variant="outline" className="text-xs">{selectedSymbol}</Badge>
+                    </div>
+                    <div className="h-40">
+                      <SimpleChart data={intraday} dataKey="close" type="line" height={160} />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Enhanced Quick Navigation */}
             <Card className="financial-card border-0 shadow-financial">
               <CardHeader>
