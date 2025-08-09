@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { useTopMovers } from "@/hooks/use-stocks";
 
 // Sample market data
 const mockMarketData = [
@@ -34,6 +35,8 @@ export const Dashboard = () => {
     queryFn: fetchMarketData,
     refetchInterval: 30000, // Refetch every 30 seconds
   });
+  const { data: gainers = [], isLoading: loadingGainers } = useTopMovers('gainers');
+  const { data: losers = [], isLoading: loadingLosers } = useTopMovers('losers');
 
   return (
     <div className="min-h-screen bg-background">
