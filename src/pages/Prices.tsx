@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { 
-  Bitcoin, 
   DollarSign, 
   Shield, 
   Fuel, 
@@ -22,17 +21,9 @@ import {
   ArrowUpDown
 } from "lucide-react";
 import { SimpleChart } from "@/components/ui/simple-chart";
-import { useCryptoQuotes, useCommodities, useForexPairs, useIndices } from "@/hooks/use-market";
+import { useCommodities, useForexPairs, useIndices } from "@/hooks/use-market";
 
 // Enhanced sample price data with more realistic values
-const cryptoData = [
-  { title: "Bitcoin", value: "$43,250", change: 1234.56, changePercent: 2.87, marketCap: "$847B", volume: "$28.5B", icon: <Bitcoin className="h-4 w-4" /> },
-  { title: "Ethereum", value: "$2,456", change: -45.23, changePercent: -1.81, marketCap: "$295B", volume: "$15.2B", icon: <Activity className="h-4 w-4" /> },
-  { title: "BNB", value: "$234.89", change: 12.45, changePercent: 5.60, marketCap: "$35.8B", volume: "$2.1B", icon: <Activity className="h-4 w-4" /> },
-  { title: "Solana", value: "$98.45", change: 8.76, changePercent: 9.78, marketCap: "$42.1B", volume: "$3.8B", icon: <Activity className="h-4 w-4" /> },
-  { title: "Cardano", value: "$0.52", change: 0.03, changePercent: 6.12, marketCap: "$18.2B", volume: "$890M", icon: <Activity className="h-4 w-4" /> },
-  { title: "Avalanche", value: "$36.78", change: -2.14, changePercent: -5.50, marketCap: "$14.5B", volume: "$1.2B", icon: <Activity className="h-4 w-4" /> }
-];
 
 const commoditiesData = [
   { title: "Gold", value: "$2,047.80", change: -12.30, changePercent: -0.60, unit: "per oz", icon: <Shield className="h-4 w-4" /> },
@@ -90,9 +81,9 @@ export function Prices() {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
-  const [favorites, setFavorites] = useState<string[]>(['Bitcoin', 'Gold', 'EUR/USD']);
+  const [favorites, setFavorites] = useState<string[]>(['S&P 500', 'Gold', 'EUR/USD']);
 
-  const { data: cryptoList = [], isLoading: loadingCrypto } = useCryptoQuotes(undefined);
+  
   const { data: commoditiesList = [], isLoading: loadingCommodities } = useCommodities();
   const { data: forexList = [], isLoading: loadingForex } = useForexPairs(undefined);
   const { data: indicesList = [], isLoading: loadingIndices } = useIndices();
@@ -127,15 +118,6 @@ export function Prices() {
     console.log('Exporting to CSV...');
   };
 
-  // Map live data to UI-friendly structures while keeping design intact
-  const cryptoData = (cryptoList || []).slice(0, 6).map((c) => ({
-    title: c.name || c.symbol,
-    value: `$${(c.price ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
-    change: Number(c.change ?? 0),
-    changePercent: Number(c.changesPercentage ?? 0),
-    icon: <Bitcoin className="h-4 w-4" />,
-    volume: c.marketCap ? `$${(c.marketCap / 1e9).toFixed(1)}B MC` : undefined,
-  }));
 
   const commoditiesData = (commoditiesList || [])
     .filter((x) => ["Gold", "Silver", "Crude Oil", "Natural Gas", "Copper", "Platinum"].some((k) => (x.name || "").includes(k)))
@@ -181,7 +163,7 @@ export function Prices() {
                 <h1 className="text-3xl font-bold text-foreground">Real-Time Market Prices</h1>
               </div>
               <p className="text-muted-foreground">
-                Live global market data from crypto, commodities, forex, and stock markets
+                Live global market data from stocks, commodities, and forex
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -241,7 +223,7 @@ export function Prices() {
           <Card className="financial-card">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>Bitcoin Price Movement</span>
+                <span>Market Index Movement</span>
                 <Badge className="bg-success/10 text-success">+2.87%</Badge>
               </CardTitle>
             </CardHeader>
@@ -258,45 +240,13 @@ export function Prices() {
         </section>
 
         {/* Price Categories */}
-        <Tabs defaultValue="crypto" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
-            <TabsTrigger value="crypto">Cryptocurrency</TabsTrigger>
+        <Tabs defaultValue="stocks" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="stocks">Stock Indices</TabsTrigger>
             <TabsTrigger value="commodities">Commodities</TabsTrigger>
             <TabsTrigger value="forex">Forex</TabsTrigger>
           </TabsList>
 
-          {/* Cryptocurrency */}
-          <TabsContent value="crypto" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-foreground">Cryptocurrency Prices</h3>
-              <Badge className="bg-primary/10 text-primary">Live Data</Badge>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredData(cryptoData).map((crypto, index) => (
-                <div key={index} className="relative">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute top-2 right-2 z-10 h-8 w-8 p-0"
-                    onClick={() => toggleFavorite(crypto.title)}
-                  >
-                    <Star className={`h-4 w-4 ${favorites.includes(crypto.title) ? 'fill-current text-warning' : 'text-muted-foreground'}`} />
-                  </Button>
-                  <PriceCard
-                    title={crypto.title}
-                    value={crypto.value}
-                    change={crypto.change}
-                    changePercent={crypto.changePercent}
-                    icon={crypto.icon}
-                    subtitle={crypto.volume ? String(crypto.volume) : undefined}
-                    loading={loading || loadingCrypto}
-                    
-                  />
-                </div>
-              ))}
-            </div>
-          </TabsContent>
 
           {/* Stock Indices */}
           <TabsContent value="stocks" className="space-y-6">

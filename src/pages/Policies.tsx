@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -106,8 +104,6 @@ export function Policies() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      
       <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Hero Section */}
         <div className="text-center space-y-4">
@@ -280,8 +276,6 @@ export function Policies() {
           </TabsContent>
         </Tabs>
       </main>
-      
-      <Footer />
     </div>
   );
 }

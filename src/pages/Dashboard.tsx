@@ -2,14 +2,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { PriceCard } from "@/components/ui/price-card";
 import { StatCard } from "@/components/ui/stat-card";
 import { SimpleChart } from "@/components/ui/simple-chart";
-import { TrendingUp, Globe, DollarSign, Activity, AlertTriangle, Newspaper, MapPin, Briefcase, BarChart3, TrendingDown, Plus, ArrowRight, Bitcoin, Fuel, Landmark } from "lucide-react";
+import { TrendingUp, Globe, DollarSign, Activity, AlertTriangle, Newspaper, MapPin, Briefcase, BarChart3, TrendingDown, Plus, ArrowRight, Fuel, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import { useTopMovers, useSymbolSearch, useIntraday } from "@/hooks/use-stocks";
 import { useState } from "react";
-import { useCryptoQuotes, useCommodities, useForexPairs } from "@/hooks/use-market";
+import { useCommodities, useForexPairs } from "@/hooks/use-market";
 
 // Sample market data
 const mockMarketData = [
@@ -32,7 +32,7 @@ const fetchMarketData = async () => {
 };
 
 export const Dashboard = () => {
-  const { data: btcList = [], isLoading: loadingBtc } = useCryptoQuotes(["BTCUSD"]);
+  
   const { data: commList = [], isLoading: loadingComm } = useCommodities();
   const { data: fxList = [], isLoading: loadingFx } = useForexPairs(["EURUSD"]);
   const { data: gainers = [], isLoading: loadingGainers } = useTopMovers('gainers');
@@ -131,15 +131,7 @@ export const Dashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                  <PriceCard 
-                    title="Bitcoin" 
-                    value={`$${((btcList[0]?.price ?? 43250).toLocaleString(undefined, { maximumFractionDigits: 2 }))}`} 
-                    change={Number(btcList[0]?.changesPercentage ?? 2.4)}
-                    changePercent={Number(btcList[0]?.changesPercentage ?? 2.4)}
-                    icon={<Bitcoin className="h-4 w-4" />}
-                    loading={loadingBtc}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   <PriceCard 
                     title="Gold" 
                     value={`$${(((commList.find(x => (x.name||"").includes("Gold"))?.price) ?? 2045).toLocaleString(undefined, { maximumFractionDigits: 2 }))}/oz`} 

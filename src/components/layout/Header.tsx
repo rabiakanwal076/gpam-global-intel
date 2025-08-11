@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, TrendingUp, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const navigation = [
   { name: "Dashboard", href: "/" },
@@ -49,6 +50,11 @@ export function Header() {
             ))}
           </nav>
 
+          {/* Right side actions */}
+          <div className="hidden md:flex items-center gap-2">
+            <ThemeToggle />
+          </div>
+
           {/* Mobile Menu */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
@@ -58,7 +64,11 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <div className="flex flex-col space-y-4 mt-8">
+              <div className="flex items-center justify-between">
+                <div className="font-semibold">Menu</div>
+                <ThemeToggle />
+              </div>
+              <div className="flex flex-col space-y-4 mt-6">
                 {navigation.map((item) => (
                   <Link
                     key={item.name}
