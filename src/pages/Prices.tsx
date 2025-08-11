@@ -22,6 +22,7 @@ import {
   ArrowUpDown
 } from "lucide-react";
 import { SimpleChart } from "@/components/ui/simple-chart";
+import { useCryptoQuotes, useCommodities, useForexPairs, useIndices } from "@/hooks/use-market";
 
 // Enhanced sample price data with more realistic values
 const cryptoData = [
@@ -91,6 +92,11 @@ export function Prices() {
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
   const [favorites, setFavorites] = useState<string[]>(['Bitcoin', 'Gold', 'EUR/USD']);
 
+  const { data: cryptoList = [], isLoading: loadingCrypto } = useCryptoQuotes(undefined);
+  const { data: commoditiesList = [], isLoading: loadingCommodities } = useCommodities();
+  const { data: forexList = [], isLoading: loadingForex } = useForexPairs(undefined);
+  const { data: indicesList = [], isLoading: loadingIndices } = useIndices();
+
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1000);
     return () => clearTimeout(timer);
@@ -112,7 +118,7 @@ export function Prices() {
 
   const filteredData = (data: any[]) => {
     return data.filter(item => 
-      item.title.toLowerCase().includes(searchTerm.toLowerCase())
+      (item.title || item.name || item.symbol).toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
 
@@ -120,6 +126,46 @@ export function Prices() {
     // Placeholder for CSV export functionality
     console.log('Exporting to CSV...');
   };
+
+  // Map live data to UI-friendly structures while keeping design intact
+  const cryptoData = (cryptoList || []).slice(0, 6).map((c) => ({
+    title: c.name || c.symbol,
+    value: `$${(c.price ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+    change: Number(c.change ?? 0),
+    changePercent: Number(c.changesPercentage ?? 0),
+    icon: <Bitcoin className="h-4 w-4" />,
+    volume: c.marketCap ? `$${(c.marketCap / 1e9).toFixed(1)}B MC` : undefined,
+  }));
+
+  const commoditiesData = (commoditiesList || [])
+    .filter((x) => ["Gold", "Silver", "Crude Oil", "Natural Gas", "Copper", "Platinum"].some((k) => (x.name || "").includes(k)))
+    .slice(0, 6)
+    .map((x) => ({
+      title: x.name || x.symbol,
+      value: `$${(x.price ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+      change: Number(x.change ?? 0),
+      changePercent: Number(x.changesPercentage ?? 0),
+      icon: <Shield className="h-4 w-4" />,
+      unit: undefined,
+    }));
+
+  const forexData = (forexList || [])
+    .filter((x) => ["EURUSD", "GBPUSD", "USDJPY", "USDCNY", "AUDUSD", "USDCAD"].includes(x.symbol))
+    .map((x) => ({
+      title: x.symbol?.replace("USDEUR", "USD/EUR").replace("EURUSD", "EUR/USD").replace("GBPUSD", "GBP/USD").replace("USDJPY", "USD/JPY").replace("USDCNY", "USD/CNY").replace("AUDUSD", "AUD/USD").replace("USDCAD", "USD/CAD"),
+      value: String(x.price ?? 0),
+      change: Number(x.change ?? 0),
+      changePercent: Number(x.changesPercentage ?? 0),
+      icon: <DollarSign className="h-4 w-4" />,
+    }));
+
+  const stocksData = (indicesList || []).slice(0, 6).map((i) => ({
+    title: i.name || i.symbol,
+    value: (i.price ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 }),
+    change: Number(i.change ?? 0),
+    changePercent: Number(i.changesPercentage ?? 0),
+    icon: <BarChart3 className="h-4 w-4" />,
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -243,8 +289,8 @@ export function Prices() {
                     change={crypto.change}
                     changePercent={crypto.changePercent}
                     icon={crypto.icon}
-                    subtitle={`Vol: ${crypto.volume}`}
-                    loading={loading}
+                    subtitle={crypto.volume ? String(crypto.volume) : undefined}
+                    loading={loading || loadingCrypto}
                     
                   />
                 </div>
@@ -267,7 +313,7 @@ export function Prices() {
                   change={stock.change}
                   changePercent={stock.changePercent}
                   icon={stock.icon}
-                  loading={loading}
+                  loading={loading || loadingIndices}
                 />
               ))}
             </div>
@@ -289,7 +335,7 @@ export function Prices() {
                   changePercent={commodity.changePercent}
                   icon={commodity.icon}
                   subtitle={commodity.unit}
-                  loading={loading}
+                  loading={loading || loadingCommodities}
                 />
               ))}
             </div>
@@ -310,7 +356,7 @@ export function Prices() {
                   change={forex.change}
                   changePercent={forex.changePercent}
                   icon={forex.icon}
-                  loading={loading}
+                  loading={loading || loadingForex}
                 />
               ))}
             </div>

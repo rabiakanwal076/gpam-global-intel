@@ -6,10 +6,10 @@ import { TrendingUp, Globe, DollarSign, Activity, AlertTriangle, Newspaper, MapP
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useTopMovers, useSymbolSearch, useIntraday } from "@/hooks/use-stocks";
 import { useState } from "react";
+import { useCryptoQuotes, useCommodities, useForexPairs } from "@/hooks/use-market";
 
 // Sample market data
 const mockMarketData = [
@@ -32,11 +32,9 @@ const fetchMarketData = async () => {
 };
 
 export const Dashboard = () => {
-  const { data: marketData, isLoading } = useQuery({
-    queryKey: ['market-data'],
-    queryFn: fetchMarketData,
-    refetchInterval: 30000, // Refetch every 30 seconds
-  });
+  const { data: btcList = [], isLoading: loadingBtc } = useCryptoQuotes(["BTCUSD"]);
+  const { data: commList = [], isLoading: loadingComm } = useCommodities();
+  const { data: fxList = [], isLoading: loadingFx } = useForexPairs(["EURUSD"]);
   const { data: gainers = [], isLoading: loadingGainers } = useTopMovers('gainers');
   const { data: losers = [], isLoading: loadingLosers } = useTopMovers('losers');
   const [query, setQuery] = useState('');
@@ -56,9 +54,9 @@ export const Dashboard = () => {
               <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
               <span className="text-sm">Live Market Data</span>
             </div>
-            <h1 className="text-4xl md:text-7xl font-bold mb-6 tracking-tight">
-              🌀 <span className="bg-gradient-to-r from-white to-accent-light bg-clip-text text-transparent">GPAM</span>.site
-            </h1>
+              <h1 className="text-4xl md:text-7xl font-bold mb-6 tracking-tight">
+                <span className="bg-gradient-to-r from-white to-accent-light bg-clip-text text-transparent">GPAM</span>.site
+              </h1>
             <p className="text-xl md:text-3xl mb-4 opacity-90 font-light">
               Global Policy & Analytics Monitor
             </p>
@@ -136,35 +134,35 @@ export const Dashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                   <PriceCard 
                     title="Bitcoin" 
-                    value="$43,250" 
-                    change={2.4}
-                    changePercent={2.4}
+                    value={`$${((btcList[0]?.price ?? 43250).toLocaleString(undefined, { maximumFractionDigits: 2 }))}`} 
+                    change={Number(btcList[0]?.changesPercentage ?? 2.4)}
+                    changePercent={Number(btcList[0]?.changesPercentage ?? 2.4)}
                     icon={<Bitcoin className="h-4 w-4" />}
-                    loading={isLoading}
+                    loading={loadingBtc}
                   />
                   <PriceCard 
                     title="Gold" 
-                    value="$2,045/oz" 
-                    change={-0.8}
-                    changePercent={-0.8}
+                    value={`$${(((commList.find(x => (x.name||"").includes("Gold"))?.price) ?? 2045).toLocaleString(undefined, { maximumFractionDigits: 2 }))}/oz`} 
+                    change={Number(commList.find(x => (x.name||"").includes("Gold"))?.changesPercentage ?? -0.8)}
+                    changePercent={Number(commList.find(x => (x.name||"").includes("Gold"))?.changesPercentage ?? -0.8)}
                     icon={<Landmark className="h-4 w-4" />}
-                    loading={isLoading}
+                    loading={loadingComm}
                   />
                   <PriceCard 
                     title="Crude Oil" 
-                    value="$74.50/bbl" 
-                    change={1.2}
-                    changePercent={1.2}
+                    value={`$${(((commList.find(x => (x.name||"").includes("Crude Oil"))?.price) ?? 74.5).toLocaleString(undefined, { maximumFractionDigits: 2 }))}/bbl`} 
+                    change={Number(commList.find(x => (x.name||"").includes("Crude Oil"))?.changesPercentage ?? 1.2)}
+                    changePercent={Number(commList.find(x => (x.name||"").includes("Crude Oil"))?.changesPercentage ?? 1.2)}
                     icon={<Fuel className="h-4 w-4" />}
-                    loading={isLoading}
+                    loading={loadingComm}
                   />
                   <PriceCard 
-                    title="USD/EUR" 
-                    value="1.0875" 
-                    change={0.3}
-                    changePercent={0.3}
+                    title="EUR/USD" 
+                    value={`${(fxList.find(x => x.symbol === 'EURUSD')?.price ?? 1.0875).toFixed(4)}`} 
+                    change={Number(fxList.find(x => x.symbol === 'EURUSD')?.changesPercentage ?? 0.3)}
+                    changePercent={Number(fxList.find(x => x.symbol === 'EURUSD')?.changesPercentage ?? 0.3)}
                     icon={<DollarSign className="h-4 w-4" />}
-                    loading={isLoading}
+                    loading={loadingFx}
                   />
                 </div>
                 <div className="mt-6 pt-6 border-t border-border">

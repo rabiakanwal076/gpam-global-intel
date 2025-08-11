@@ -24,8 +24,8 @@ export function SimpleChart({
       <ResponsiveContainer>
         <ChartComponent data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-          <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" />
-          <YAxis stroke="hsl(var(--muted-foreground))" />
+          <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
+          <YAxis stroke="hsl(var(--muted-foreground))" tickLine={false} axisLine={false} />
           <Tooltip 
             contentStyle={{ 
               backgroundColor: 'hsl(var(--card))', 
@@ -41,9 +41,10 @@ export function SimpleChart({
               stroke={stroke} 
               strokeWidth={2} 
               dot={false} 
+              activeDot={{ r: 4 }}
             />
           ) : (
-            <Bar dataKey={dataKey} fill={fill} />
+            <Bar dataKey={dataKey} fill={fill} radius={[4, 4, 0, 0]} />
           )}
         </ChartComponent>
       </ResponsiveContainer>

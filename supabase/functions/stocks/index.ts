@@ -127,6 +127,58 @@ serve(async (req) => {
       return json({ error: "Missing API key (FMP_API_KEY or ALPHA_VANTAGE_API_KEY)" }, 400);
     }
 
+    if (action === "crypto_quotes") {
+      const symbols: string[] = body?.symbols ?? [];
+      if (!FMP_KEY) {
+        return json({ error: "FMP_API_KEY required for crypto data" }, 400);
+      }
+      if (symbols.length > 0) {
+        const list = symbols.join(",");
+        const url = `${fmpBase}/quote/${encodeURIComponent(list)}?apikey=${FMP_KEY}`;
+        const data = await fetchJson(url);
+        return json(data);
+      } else {
+        const url = `${fmpBase}/quotes/crypto?apikey=${FMP_KEY}`;
+        const data = await fetchJson(url);
+        return json(Array.isArray(data) ? data : []);
+      }
+    }
+
+    if (action === "commodities") {
+      if (!FMP_KEY) {
+        return json({ error: "FMP_API_KEY required for commodities" }, 400);
+      }
+      const url = `${fmpBase}/quotes/commodity?apikey=${FMP_KEY}`;
+      const data = await fetchJson(url);
+      return json(Array.isArray(data) ? data : []);
+    }
+
+    if (action === "forex") {
+      const pairs: string[] = body?.pairs ?? [];
+      if (!FMP_KEY) {
+        return json({ error: "FMP_API_KEY required for forex" }, 400);
+      }
+      if (pairs.length > 0) {
+        const list = pairs.join(",");
+        const url = `${fmpBase}/quote/${encodeURIComponent(list)}?apikey=${FMP_KEY}`;
+        const data = await fetchJson(url);
+        return json(data);
+      } else {
+        const url = `${fmpBase}/fx?apikey=${FMP_KEY}`;
+        const data = await fetchJson(url);
+        return json(Array.isArray(data) ? data : []);
+      }
+    }
+
+    if (action === "indices") {
+      if (!FMP_KEY) {
+        return json({ error: "FMP_API_KEY required for indices" }, 400);
+      }
+      const url = `${fmpBase}/quotes/index?apikey=${FMP_KEY}`;
+      const data = await fetchJson(url);
+      return json(Array.isArray(data) ? data : []);
+    }
+
     return json({ error: "Unknown action" }, 400);
   } catch (e) {
     return json({ error: (e as Error).message || "Unexpected error" }, 500);
