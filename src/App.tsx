@@ -3,12 +3,16 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Dashboard } from "@/pages/Dashboard";
 import { Prices } from "@/pages/Prices";
 import { Policies } from "@/pages/Policies";
 import { Calculators } from "@/pages/Calculators";
+import { InvestmentTracker } from "@/pages/InvestmentTracker";
+import { ImpactAnalyzer } from "@/pages/ImpactAnalyzer";
+import { AIInsightsBlog } from "@/pages/Blog";
 import { NotFound } from "./pages/NotFound";
 
 const queryClient = new QueryClient();
