@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { PriceCard } from "@/components/ui/price-card";
 import { StatCard } from "@/components/ui/stat-card";
 import { SimpleChart } from "@/components/ui/simple-chart";
-import { TrendingUp, Globe, DollarSign, Activity, AlertTriangle, Newspaper, MapPin, Briefcase, BarChart3, TrendingDown, Plus, ArrowRight, Fuel, Landmark } from "lucide-react";
+import { TrendingUp, Globe, DollarSign, Activity, AlertTriangle, Newspaper, MapPin, Briefcase, BarChart3, TrendingDown, Plus, ArrowRight, Fuel, Landmark, Search, TrendingUpIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,9 @@ import { Link } from "react-router-dom";
 import { useTopMovers, useSymbolSearch, useIntraday } from "@/hooks/use-stocks";
 import { useState } from "react";
 import { useCommodities, useForexPairs } from "@/hooks/use-market";
+import { useStockSentiment } from "@/hooks/use-sentiment";
+import { usePolicyNews } from "@/hooks/use-policy-news";
+import { Helmet } from "react-helmet-async";
 
 // Sample market data
 const mockMarketData = [
@@ -41,9 +44,16 @@ export const Dashboard = () => {
   const [selectedSymbol, setSelectedSymbol] = useState('AAPL');
   const { data: searchResults = [] } = useSymbolSearch(query);
   const { data: intraday = [] } = useIntraday(selectedSymbol, '5min');
+  const { data: sentiment } = useStockSentiment(["AAPL", "TSLA", "NVDA", "MSFT", "GOOGL"]);
+  const { data: policyNews, isLoading: newsLoading } = usePolicyNews();
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Global Policy & Analytics Monitor | Live Market Data & Policy Insights</title>
+        <meta name="description" content="Real-time financial intelligence platform tracking global markets, stocks sentiment, economic policies, and investment flows with live data." />
+        <link rel="canonical" href="/" />
+      </Helmet>
       {/* Enhanced Hero Section */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 gradient-primary opacity-95"></div>
@@ -168,7 +178,7 @@ export const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Enhanced Policy Updates */}
+            {/* Latest Policy Updates - Live Data */}
             <Card className="financial-card border-0 shadow-financial">
               <CardHeader className="financial-card-header">
                 <div className="flex items-center justify-between">
@@ -179,77 +189,81 @@ export const Dashboard = () => {
                       </div>
                       Latest Policy Updates
                     </CardTitle>
-                    <CardDescription className="mt-2">AI-summarized economic policy changes with market impact analysis</CardDescription>
+                    <CardDescription className="mt-2">Live economic policy news with market impact analysis</CardDescription>
                   </div>
-                  <Button variant="ghost" size="sm">
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                    Live Data
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="relative pl-6 pb-6 border-l-2 border-primary/30 last:border-l-0">
-                  <div className="absolute -left-2 top-0 w-4 h-4 bg-primary rounded-full border-4 border-background"></div>
-                  <div className="bg-gradient-to-r from-primary/5 to-transparent p-4 rounded-lg">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-semibold text-foreground">Fed Signals Rate Cut Pause</h4>
-                      <Badge variant="destructive" className="text-xs">High Impact</Badge>
-                    </div>
-                    <p className="text-muted-foreground text-sm mb-3 leading-relaxed">
-                      US Federal Reserve indicates potential pause in rate cuts amid persistent inflation concerns and strong labor market data
-                    </p>
-                    <div className="flex items-center gap-3 text-xs">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        United States
-                      </span>
-                      <span className="text-muted-foreground">2 hours ago</span>
-                      <span className="bg-danger/10 text-danger px-2 py-1 rounded">Markets: -1.2%</span>
-                    </div>
+                {newsLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="relative pl-6 pb-6 border-l-2 border-muted">
+                        <div className="absolute -left-2 top-0 w-4 h-4 bg-muted rounded-full border-4 border-background"></div>
+                        <div className="bg-muted/50 p-4 rounded-lg animate-pulse">
+                          <div className="h-5 bg-muted rounded w-3/4 mb-2"></div>
+                          <div className="h-12 bg-muted rounded w-full mb-3"></div>
+                          <div className="flex gap-2">
+                            <div className="h-4 bg-muted rounded w-20"></div>
+                            <div className="h-4 bg-muted rounded w-16"></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-                
-                <div className="relative pl-6 pb-6 border-l-2 border-success/30 last:border-l-0">
-                  <div className="absolute -left-2 top-0 w-4 h-4 bg-success rounded-full border-4 border-background"></div>
-                  <div className="bg-gradient-to-r from-success/5 to-transparent p-4 rounded-lg">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-semibold text-foreground">China Announces Green Investment Fund</h4>
-                      <Badge variant="secondary" className="text-xs bg-success/10 text-success">Medium Impact</Badge>
+                ) : policyNews && policyNews.length > 0 ? (
+                  policyNews.slice(0, 3).map((update, idx) => (
+                    <div key={idx} className={`relative pl-6 pb-6 border-l-2 ${
+                      update.impact === 'High' ? 'border-primary/30' : 
+                      update.impact === 'Medium' ? 'border-success/30' : 'border-warning/30'
+                    } last:border-l-0`}>
+                      <div className={`absolute -left-2 top-0 w-4 h-4 rounded-full border-4 border-background ${
+                        update.impact === 'High' ? 'bg-primary' : 
+                        update.impact === 'Medium' ? 'bg-success' : 'bg-warning'
+                      }`}></div>
+                      <div className={`bg-gradient-to-r p-4 rounded-lg ${
+                        update.impact === 'High' ? 'from-primary/5 to-transparent' : 
+                        update.impact === 'Medium' ? 'from-success/5 to-transparent' : 'from-warning/5 to-transparent'
+                      }`}>
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-semibold text-foreground">{update.title}</h4>
+                          <Badge 
+                            variant={update.impact === 'High' ? 'destructive' : 'secondary'}
+                            className={`text-xs ${
+                              update.impact === 'Medium' ? 'bg-success/10 text-success' : 
+                              update.impact === 'Low' ? 'bg-warning/10 text-warning' : ''
+                            }`}
+                          >
+                            {update.impact} Impact
+                          </Badge>
+                        </div>
+                        <p className="text-muted-foreground text-sm mb-3 leading-relaxed">
+                          {update.content}
+                        </p>
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {update.country}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {new Date(update.publishedDate).toLocaleString('en-US', { 
+                              month: 'short', 
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-muted-foreground text-sm mb-3 leading-relaxed">
-                      $50B fund aimed at renewable energy and climate tech investments, targeting carbon neutrality goals by 2060
-                    </p>
-                    <div className="flex items-center gap-3 text-xs">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        China
-                      </span>
-                      <span className="text-muted-foreground">4 hours ago</span>
-                      <span className="bg-success/10 text-success px-2 py-1 rounded">Clean Energy: +3.4%</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="relative pl-6">
-                  <div className="absolute -left-2 top-0 w-4 h-4 bg-warning rounded-full border-4 border-background"></div>
-                  <div className="bg-gradient-to-r from-warning/5 to-transparent p-4 rounded-lg">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-semibold text-foreground">EU Digital Services Act Implementation</h4>
-                      <Badge variant="secondary" className="text-xs bg-warning/10 text-warning">Low Impact</Badge>
-                    </div>
-                    <p className="text-muted-foreground text-sm mb-3 leading-relaxed">
-                      New regulations for digital platforms take effect, impacting major tech companies operating in Europe
-                    </p>
-                    <div className="flex items-center gap-3 text-xs">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        European Union
-                      </span>
-                      <span className="text-muted-foreground">6 hours ago</span>
-                      <span className="bg-warning/10 text-warning px-2 py-1 rounded">Tech Stocks: -0.5%</span>
-                    </div>
-                  </div>
-                </div>
-
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No policy updates available
+                  </p>
+                )}
                 <div className="pt-4 border-t border-border">
                   <Link to="/policies">
                     <Button variant="outline" className="w-full sm:w-auto">
@@ -350,6 +364,57 @@ export const Dashboard = () => {
 
           {/* Enhanced Right Column */}
           <div className="space-y-6">
+            {/* Stock Sentiment Analysis - Live Data */}
+            <Card className="financial-card border-0 shadow-financial">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <TrendingUpIcon className="h-5 w-5 text-primary" />
+                  Stock Sentiment Analysis
+                </CardTitle>
+                <CardDescription>Live news-based sentiment for major stocks</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {sentiment?.map((stock) => (
+                  <div
+                    key={stock.symbol}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors border border-border/50"
+                  >
+                    <div className="space-y-1">
+                      <div className="font-medium text-foreground">{stock.symbol}</div>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            stock.sentiment === "Bullish" ? "default" :
+                            stock.sentiment === "Bearish" ? "destructive" : "secondary"
+                          }
+                          className="text-xs"
+                        >
+                          {stock.sentiment}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {stock.totalArticles} articles
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-sm font-medium ${
+                        stock.score > 0 ? 'text-green-500' : stock.score < 0 ? 'text-red-500' : 'text-muted-foreground'
+                      }`}>
+                        {stock.score > 0 ? '+' : ''}{stock.score}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {stock.bullishCount}↑ {stock.bearishCount}↓
+                      </div>
+                    </div>
+                  </div>
+                )) || (
+                  <div className="text-sm text-muted-foreground text-center py-4">
+                    Loading sentiment data...
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Stock Lookup */}
             <Card className="financial-card border-0 shadow-financial">
               <CardHeader>
