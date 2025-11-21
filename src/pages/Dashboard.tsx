@@ -8,8 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
 import { useTopMovers } from "@/hooks/use-stocks";
-import { useCommodities, useForexPairs } from "@/hooks/use-market";
+import { useCommodities, useForexPairs, useIndices } from "@/hooks/use-market";
 import { Helmet } from "react-helmet-async";
+import { 
+  useEconomicCalendar, 
+  useEarningsCalendar, 
+  useIPOCalendar, 
+  useInsiderTrading, 
+  useSenateTrading,
+  useMarketNews,
+  useSectorPerformance
+} from "@/hooks/use-market-data";
 
 const mockMarketData = [
   { name: 'Mon', value: 42800 },
@@ -27,10 +36,18 @@ const americanMarkets = ["^GSPC", "^DJI", "^IXIC", "^GSPTSE", "^BVSP"];
 export function Dashboard() {
   const navigate = useNavigate();
   const { data: commList = [], isLoading: loadingComm } = useCommodities();
-  const { data: fxList = [], isLoading: loadingFx } = useForexPairs(["EURUSD"]);
+  const { data: fxList = [], isLoading: loadingFx } = useForexPairs(["EURUSD", "GBPUSD", "USDJPY"]);
+  const { data: indicesList = [], isLoading: loadingIndices } = useIndices();
   const { data: gainers = [], isLoading: loadingGainers } = useTopMovers('gainers');
   const { data: losers = [], isLoading: loadingLosers } = useTopMovers('losers');
   const { data: actives = [], isLoading: loadingActives } = useTopMovers('actives');
+  const { data: economicEvents = [], isLoading: loadingEconomic } = useEconomicCalendar();
+  const { data: earningsEvents = [], isLoading: loadingEarnings } = useEarningsCalendar();
+  const { data: ipoEvents = [], isLoading: loadingIPO } = useIPOCalendar();
+  const { data: insiderTrades = [], isLoading: loadingInsider } = useInsiderTrading();
+  const { data: senateTrades = [], isLoading: loadingSenate } = useSenateTrading();
+  const { data: marketNews = [], isLoading: loadingNews } = useMarketNews();
+  const { data: sectorPerf = [], isLoading: loadingSectors } = useSectorPerformance();
 
   const handleStockClick = (symbol: string) => {
     navigate(`/stock/${symbol}`);
@@ -91,47 +108,116 @@ export function Dashboard() {
         {/* Global Market Snapshot */}
         <section>
           <h2 className="text-3xl font-bold text-center mb-6">Global Market Snapshot</h2>
-          <Card className="financial-card hover-lift">
-            <CardHeader className="financial-card-header">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Live Prices</CardTitle>
-                <Badge className="bg-success/10 text-success border-success/20">Live</Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <PriceCard 
-                  title="Gold" 
-                  value={`$${((commList.find(x => x.name?.includes("Gold"))?.price ?? 2045).toFixed(2))}`} 
-                  change={Number(commList.find(x => x.name?.includes("Gold"))?.changesPercentage ?? -0.8)}
-                  changePercent={Number(commList.find(x => x.name?.includes("Gold"))?.changesPercentage ?? -0.8)}
-                  icon={<Landmark className="h-4 w-4" />}
-                  loading={loadingComm}
-                />
-                <PriceCard 
-                  title="Crude Oil" 
-                  value={`$${((commList.find(x => x.name?.includes("Crude"))?.price ?? 74.5).toFixed(2))}`} 
-                  change={Number(commList.find(x => x.name?.includes("Crude"))?.changesPercentage ?? 1.2)}
-                  changePercent={Number(commList.find(x => x.name?.includes("Crude"))?.changesPercentage ?? 1.2)}
-                  icon={<Fuel className="h-4 w-4" />}
-                  loading={loadingComm}
-                />
-                <PriceCard 
-                  title="EUR/USD" 
-                  value={(fxList.find(x => x.symbol === 'EURUSD')?.price ?? 1.0875).toFixed(4)} 
-                  change={Number(fxList.find(x => x.symbol === 'EURUSD')?.changesPercentage ?? 0.3)}
-                  changePercent={Number(fxList.find(x => x.symbol === 'EURUSD')?.changesPercentage ?? 0.3)}
-                  icon={<Globe className="h-4 w-4" />}
-                  loading={loadingFx}
-                />
-              </div>
-              <Link to="/prices">
-                <Button variant="outline" size="sm" className="w-full hover-scale">
-                  View All Markets <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Live Prices */}
+            <Card className="financial-card hover-lift">
+              <CardHeader className="financial-card-header">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Commodities</CardTitle>
+                  <Badge className="bg-success/10 text-success border-success/20">Live</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-3">
+                  {(loadingComm ? Array.from({ length: 3 }) : commList.slice(0, 3)).map((item: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-3 rounded bg-muted/30 border border-border/20">
+                      <div className="flex items-center gap-2">
+                        <Landmark className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">{loadingComm ? '—' : item.name}</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{loadingComm ? '—' : `$${item.price?.toFixed(2)}`}</p>
+                        <p className={`text-xs ${(item.changesPercentage ?? 0) >= 0 ? 'text-success' : 'text-danger'}`}>
+                          {loadingComm ? '—' : `${(item.changesPercentage ?? 0) >= 0 ? '+' : ''}${item.changesPercentage?.toFixed(2)}%`}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Forex */}
+            <Card className="financial-card hover-lift">
+              <CardHeader className="financial-card-header">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Forex Market Data</CardTitle>
+                  <Badge className="bg-success/10 text-success border-success/20">Live</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-3">
+                  {(loadingFx ? Array.from({ length: 3 }) : fxList.slice(0, 3)).map((item: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-3 rounded bg-muted/30 border border-border/20">
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">{loadingFx ? '—' : item.symbol}</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{loadingFx ? '—' : item.price?.toFixed(4)}</p>
+                        <p className={`text-xs ${(item.changesPercentage ?? 0) >= 0 ? 'text-success' : 'text-danger'}`}>
+                          {loadingFx ? '—' : `${(item.changesPercentage ?? 0) >= 0 ? '+' : ''}${item.changesPercentage?.toFixed(2)}%`}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Index Market Data */}
+            <Card className="financial-card hover-lift">
+              <CardHeader className="financial-card-header">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Index Market Data</CardTitle>
+                  <Badge className="bg-success/10 text-success border-success/20">Live</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-3">
+                  {(loadingIndices ? Array.from({ length: 3 }) : indicesList.slice(0, 3)).map((item: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-3 rounded bg-muted/30 border border-border/20">
+                      <div>
+                        <p className="font-medium">{loadingIndices ? '—' : item.symbol}</p>
+                        <p className="text-xs text-muted-foreground">{loadingIndices ? 'Loading...' : (item.name || '')}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{loadingIndices ? '—' : item.price?.toFixed(2)}</p>
+                        <p className={`text-xs ${(item.changesPercentage ?? 0) >= 0 ? 'text-success' : 'text-danger'}`}>
+                          {loadingIndices ? '—' : `${(item.changesPercentage ?? 0) >= 0 ? '+' : ''}${item.changesPercentage?.toFixed(2)}%`}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Sector Performance */}
+            <Card className="financial-card hover-lift">
+              <CardHeader className="financial-card-header">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Sector Performance</CardTitle>
+                  <Badge className="bg-success/10 text-success border-success/20">Live</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-3">
+                  {(loadingSectors ? Array.from({ length: 3 }) : sectorPerf.slice(0, 3)).map((item: any, idx: number) => {
+                    const change = parseFloat(item.changesPercentage?.replace('%', '') || '0');
+                    return (
+                      <div key={idx} className="flex items-center justify-between p-3 rounded bg-muted/30 border border-border/20">
+                        <span className="font-medium">{loadingSectors ? '—' : item.sector}</span>
+                        <p className={`text-sm font-semibold ${change >= 0 ? 'text-success' : 'text-danger'}`}>
+                          {loadingSectors ? '—' : `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </section>
 
         {/* Market Performance */}
@@ -238,6 +324,164 @@ export function Dashboard() {
               </CardContent>
             </Card>
           </div>
+        </section>
+
+        {/* Market Calendar */}
+        <section>
+          <h2 className="text-3xl font-bold text-center mb-6">Market Calendar</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Economic Calendar */}
+            <Card className="financial-card hover-lift">
+              <CardHeader className="financial-card-header">
+                <CardTitle className="text-lg">Economic Data</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-2">
+                  {(loadingEconomic ? Array.from({ length: 5 }) : economicEvents.slice(0, 5)).map((event: any, idx: number) => (
+                    <div key={idx} className="p-2 rounded bg-muted/20 border border-border/10">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-xs font-semibold">{loadingEconomic ? '—' : event.event}</p>
+                        <Badge variant="outline" className="text-xs">{loadingEconomic ? '—' : event.country}</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{loadingEconomic ? 'Loading...' : new Date(event.date).toLocaleDateString()}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Earnings Calendar */}
+            <Card className="financial-card hover-lift">
+              <CardHeader className="financial-card-header">
+                <CardTitle className="text-lg">Earnings Calendar</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-2">
+                  {(loadingEarnings ? Array.from({ length: 5 }) : earningsEvents.slice(0, 5)).map((event: any, idx: number) => (
+                    <div key={idx} className="clickable-row p-2 rounded bg-muted/20 border border-border/10" onClick={() => !loadingEarnings && handleStockClick(event.symbol)}>
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm font-semibold">{loadingEarnings ? '—' : event.symbol}</p>
+                        <p className="text-xs text-muted-foreground">{loadingEarnings ? '—' : event.time}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{loadingEarnings ? 'Loading...' : new Date(event.date).toLocaleDateString()}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* IPO Calendar */}
+            <Card className="financial-card hover-lift">
+              <CardHeader className="financial-card-header">
+                <CardTitle className="text-lg">IPO Calendar</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-2">
+                  {(loadingIPO ? Array.from({ length: 5 }) : ipoEvents.slice(0, 5)).map((event: any, idx: number) => (
+                    <div key={idx} className="p-2 rounded bg-muted/20 border border-border/10">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm font-semibold">{loadingIPO ? '—' : event.symbol}</p>
+                        <Badge variant="outline" className="text-xs">{loadingIPO ? '—' : event.exchange}</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{loadingIPO ? 'Loading...' : event.company}</p>
+                      <p className="text-xs text-muted-foreground">{loadingIPO ? '—' : new Date(event.date).toLocaleDateString()}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* Trading Activity */}
+        <section>
+          <h2 className="text-3xl font-bold text-center mb-6">Insider & Congressional Trading</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Insider Trading */}
+            <Card className="financial-card hover-lift">
+              <CardHeader className="financial-card-header">
+                <CardTitle className="text-lg">Insider Trading</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-2">
+                  {(loadingInsider ? Array.from({ length: 5 }) : insiderTrades.slice(0, 5)).map((trade: any, idx: number) => (
+                    <div key={idx} className="clickable-row p-3 rounded bg-muted/20 border border-border/10" onClick={() => !loadingInsider && handleStockClick(trade.symbol)}>
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm font-semibold">{loadingInsider ? '—' : trade.symbol}</p>
+                        <Badge variant={trade.transactionType?.includes('Sale') ? 'destructive' : 'default'} className="text-xs">
+                          {loadingInsider ? '—' : trade.transactionType}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-1">{loadingInsider ? 'Loading...' : trade.reportingName}</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs">{loadingInsider ? '—' : `${trade.securitiesTransacted?.toLocaleString()} shares`}</p>
+                        <p className="text-xs">{loadingInsider ? '—' : `$${trade.price?.toFixed(2)}`}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Senate Trading */}
+            <Card className="financial-card hover-lift">
+              <CardHeader className="financial-card-header">
+                <CardTitle className="text-lg">Congressional Trading</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-2">
+                  {(loadingSenate ? Array.from({ length: 5 }) : senateTrades.slice(0, 5)).map((trade: any, idx: number) => (
+                    <div key={idx} className="clickable-row p-3 rounded bg-muted/20 border border-border/10" onClick={() => !loadingSenate && handleStockClick(trade.symbol)}>
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm font-semibold">{loadingSenate ? '—' : trade.symbol}</p>
+                        <Badge variant={trade.type?.includes('sale') ? 'destructive' : 'default'} className="text-xs">
+                          {loadingSenate ? '—' : trade.type}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-1">{loadingSenate ? 'Loading...' : trade.senator}</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs">{loadingSenate ? '—' : trade.amount}</p>
+                        <p className="text-xs text-muted-foreground">{loadingSenate ? '—' : new Date(trade.transactionDate).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* Market News */}
+        <section>
+          <h2 className="text-3xl font-bold text-center mb-6">Market News</h2>
+          <Card className="financial-card hover-lift">
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(loadingNews ? Array.from({ length: 6 }) : marketNews.slice(0, 6)).map((news: any, idx: number) => (
+                  <a 
+                    key={idx} 
+                    href={loadingNews ? '#' : news.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="clickable-row p-4 rounded bg-muted/20 border border-border/10 block"
+                  >
+                    <div className="flex gap-3">
+                      {news.image && (
+                        <img src={news.image} alt="" className="w-20 h-20 object-cover rounded" />
+                      )}
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold mb-1 line-clamp-2">{loadingNews ? 'Loading...' : news.title}</p>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{loadingNews ? '—' : news.site}</span>
+                          <span>{loadingNews ? '—' : new Date(news.publishedDate).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </section>
 
         {/* CTA */}
