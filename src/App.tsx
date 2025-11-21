@@ -8,6 +8,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Dashboard } from "@/pages/Dashboard";
 import { Prices } from "@/pages/Prices";
+import { StockDetail } from "@/pages/StockDetail";
 import { Policies } from "@/pages/Policies";
 import { Calculators } from "@/pages/Calculators";
 import { InvestmentTracker } from "@/pages/InvestmentTracker";
@@ -30,6 +31,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/prices" element={<Prices />} />
+                <Route path="/stock/:symbol" element={<StockDetail />} />
                 <Route path="/policies" element={<Policies />} />
                 <Route path="/investments" element={<InvestmentTracker />} />
                 <Route path="/impact" element={<ImpactAnalyzer />} />
