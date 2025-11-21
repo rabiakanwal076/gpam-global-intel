@@ -186,6 +186,102 @@ serve(async (req) => {
       return json(Array.isArray(data) ? data : []);
     }
 
+    if (action === "economic_calendar") {
+      if (!FMP_KEY) {
+        return json({ error: "FMP_API_KEY required for economic calendar" }, 400);
+      }
+      const url = `${fmpBase}/economic_calendar?apikey=${FMP_KEY}`;
+      const data = await fetchJson(url);
+      return json(Array.isArray(data) ? data.slice(0, 10) : []);
+    }
+
+    if (action === "earnings_calendar") {
+      if (!FMP_KEY) {
+        return json({ error: "FMP_API_KEY required for earnings calendar" }, 400);
+      }
+      const url = `${fmpBase}/earning_calendar?apikey=${FMP_KEY}`;
+      const data = await fetchJson(url);
+      return json(Array.isArray(data) ? data.slice(0, 10) : []);
+    }
+
+    if (action === "ipo_calendar") {
+      if (!FMP_KEY) {
+        return json({ error: "FMP_API_KEY required for IPO calendar" }, 400);
+      }
+      const url = `${fmpBase}/ipo_calendar?apikey=${FMP_KEY}`;
+      const data = await fetchJson(url);
+      return json(Array.isArray(data) ? data.slice(0, 10) : []);
+    }
+
+    if (action === "insider_trading") {
+      if (!FMP_KEY) {
+        return json({ error: "FMP_API_KEY required for insider trading" }, 400);
+      }
+      const url = `${fmpBase}/insider-trading?page=0&apikey=${FMP_KEY}`;
+      const data = await fetchJson(url);
+      return json(Array.isArray(data) ? data.slice(0, 10) : []);
+    }
+
+    if (action === "senate_trading") {
+      if (!FMP_KEY) {
+        return json({ error: "FMP_API_KEY required for senate trading" }, 400);
+      }
+      const url = `${fmpBase}/senate-trading?page=0&apikey=${FMP_KEY}`;
+      const data = await fetchJson(url);
+      return json(Array.isArray(data) ? data.slice(0, 10) : []);
+    }
+
+    if (action === "company_profile") {
+      const symbol: string = body?.symbol;
+      if (!symbol) return json({ error: "symbol is required" }, 400);
+      if (!FMP_KEY) {
+        return json({ error: "FMP_API_KEY required for company profile" }, 400);
+      }
+      const url = `${fmpBase}/profile/${encodeURIComponent(symbol)}?apikey=${FMP_KEY}`;
+      const data = await fetchJson(url);
+      return json(Array.isArray(data) && data.length > 0 ? data[0] : {});
+    }
+
+    if (action === "analyst_estimates") {
+      const symbol: string = body?.symbol;
+      if (!symbol) return json({ error: "symbol is required" }, 400);
+      if (!FMP_KEY) {
+        return json({ error: "FMP_API_KEY required for analyst estimates" }, 400);
+      }
+      const url = `${fmpBase}/analyst-estimates/${encodeURIComponent(symbol)}?apikey=${FMP_KEY}`;
+      const data = await fetchJson(url);
+      return json(Array.isArray(data) ? data.slice(0, 4) : []);
+    }
+
+    if (action === "price_target") {
+      const symbol: string = body?.symbol;
+      if (!symbol) return json({ error: "symbol is required" }, 400);
+      if (!FMP_KEY) {
+        return json({ error: "FMP_API_KEY required for price target" }, 400);
+      }
+      const url = `${fmpBase}/price-target?symbol=${encodeURIComponent(symbol)}&apikey=${FMP_KEY}`;
+      const data = await fetchJson(url);
+      return json(Array.isArray(data) ? data.slice(0, 5) : []);
+    }
+
+    if (action === "market_news") {
+      if (!FMP_KEY) {
+        return json({ error: "FMP_API_KEY required for market news" }, 400);
+      }
+      const url = `${fmpBase}/stock_news?page=0&apikey=${FMP_KEY}`;
+      const data = await fetchJson(url);
+      return json(Array.isArray(data) ? data.slice(0, 10) : []);
+    }
+
+    if (action === "sector_performance") {
+      if (!FMP_KEY) {
+        return json({ error: "FMP_API_KEY required for sector performance" }, 400);
+      }
+      const url = `${fmpBase}/sector-performance?apikey=${FMP_KEY}`;
+      const data = await fetchJson(url);
+      return json(Array.isArray(data) ? data : []);
+    }
+
     return json({ error: "Unknown action" }, 400);
   } catch (e) {
     return json({ error: (e as Error).message || "Unexpected error" }, 500);
