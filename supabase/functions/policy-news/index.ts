@@ -32,6 +32,11 @@ serve(async (req) => {
       
       if (!newsRes.ok) {
         console.error('Failed to fetch news:', newsRes.status);
+        // Return empty array for 403 (premium feature) instead of error
+        if (newsRes.status === 403) {
+          console.log('Premium news feature not available with free tier API');
+          return json([]);
+        }
         return json({ error: 'Failed to fetch news' }, 500);
       }
 
