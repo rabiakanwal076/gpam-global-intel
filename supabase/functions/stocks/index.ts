@@ -18,7 +18,14 @@ function json(data: unknown, status = 200) {
 
 async function fetchJson(url: string) {
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Request failed: ${res.status} ${url}`);
+  if (!res.ok) {
+    // Return empty array for 403 (forbidden/premium feature) errors
+    if (res.status === 403) {
+      console.log(`Premium feature not available: ${url}`);
+      return [];
+    }
+    throw new Error(`Request failed: ${res.status} ${url}`);
+  }
   return await res.json();
 }
 
