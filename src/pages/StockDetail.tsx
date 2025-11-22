@@ -9,9 +9,20 @@ import { Helmet } from "react-helmet-async";
 
 export function StockDetail() {
   const { symbol } = useParams<{ symbol: string }>();
-  const { data: quotes = [] } = useStockQuotes(symbol ? [symbol] : []);
+  const { data: quotes = [], isLoading } = useStockQuotes(symbol ? [symbol] : []);
   const { data: intraday = [] } = useIntraday(symbol || "", "5min");
-  const stock = quotes[0];
+  const stock = quotes?.[0];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center">
+          <Activity className="h-12 w-12 mx-auto mb-4 animate-pulse text-primary" />
+          <p className="text-muted-foreground">Loading stock data...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!symbol || !stock) {
     return (
@@ -40,17 +51,19 @@ export function StockDetail() {
     );
   }
 
-  const isPositive = (stock.change ?? 0) >= 0;
-  const chartData = intraday.map((d) => ({
-    time: new Date(d.time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-    price: d.close,
-  }));
+  const isPositive = (stock?.change ?? 0) >= 0;
+  const chartData = (intraday || [])
+    .filter((d) => d && d.time && d.close != null)
+    .map((d) => ({
+      time: new Date(d.time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+      price: d.close,
+    }));
 
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>{stock.symbol} - {stock.name} Stock Price | Live Market Data | GPAM.site</title>
-        <meta name="description" content={`Real-time ${stock.symbol} stock price, charts, and market data. Current price: $${stock.price.toFixed(2)} with ${stock.changesPercentage?.toFixed(2)}% change.`} />
+        <title>{stock?.symbol} - {stock?.name} Stock Price | Live Market Data | GPAM.site</title>
+        <meta name="description" content={`Real-time ${stock?.symbol} stock price, charts, and market data. Current price: $${(stock?.price ?? 0).toFixed(2)} with ${(stock?.changesPercentage ?? 0).toFixed(2)}% change.`} />
         <link rel="canonical" href={`/stock/${symbol}`} />
       </Helmet>
 
@@ -66,21 +79,21 @@ export function StockDetail() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-foreground">{stock.symbol}</h1>
+                <h1 className="text-3xl font-bold text-foreground">{stock?.symbol || 'N/A'}</h1>
                 <Badge variant={isPositive ? "default" : "destructive"} className="text-sm">
-                  {isPositive ? "+" : ""}{stock.changesPercentage?.toFixed(2)}%
+                  {isPositive ? "+" : ""}{(stock?.changesPercentage ?? 0).toFixed(2)}%
                 </Badge>
               </div>
-              <p className="text-muted-foreground">{stock.name}</p>
+              <p className="text-muted-foreground">{stock?.name || 'Unknown'}</p>
             </div>
             <div className="text-left md:text-right">
               <div className="text-4xl font-bold text-foreground mb-1">
-                ${stock.price.toFixed(2)}
+                ${(stock?.price ?? 0).toFixed(2)}
               </div>
               <div className={`flex items-center gap-1 ${isPositive ? "text-success" : "text-danger"}`}>
                 {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                 <span className="font-medium">
-                  {isPositive ? "+" : ""}{stock.change?.toFixed(2)} USD
+                  {isPositive ? "+" : ""}{(stock?.change ?? 0).toFixed(2)} USD
                 </span>
               </div>
             </div>
@@ -127,18 +140,18 @@ export function StockDetail() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
                   <span className="text-sm text-muted-foreground">Current Price</span>
-                  <span className="font-semibold text-foreground">${stock.price.toFixed(2)}</span>
+                  <span className="font-semibold text-foreground">${(stock?.price ?? 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
                   <span className="text-sm text-muted-foreground">Change</span>
                   <span className={`font-semibold ${isPositive ? "text-success" : "text-danger"}`}>
-                    {isPositive ? "+" : ""}{stock.change?.toFixed(2)}
+                    {isPositive ? "+" : ""}{(stock?.change ?? 0).toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
                   <span className="text-sm text-muted-foreground">Change %</span>
                   <span className={`font-semibold ${isPositive ? "text-success" : "text-danger"}`}>
-                    {isPositive ? "+" : ""}{stock.changesPercentage?.toFixed(2)}%
+                    {isPositive ? "+" : ""}{(stock?.changesPercentage ?? 0).toFixed(2)}%
                   </span>
                 </div>
               </CardContent>
@@ -154,7 +167,7 @@ export function StockDetail() {
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Symbol</span>
-                  <span className="font-medium text-foreground">{stock.symbol}</span>
+                  <span className="font-medium text-foreground">{stock?.symbol || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Status</span>
@@ -172,11 +185,11 @@ export function StockDetail() {
         {/* Additional Info */}
         <Card className="financial-card hover-lift mt-6">
           <CardHeader>
-            <CardTitle>About {stock.name}</CardTitle>
+            <CardTitle>About {stock?.name || stock?.symbol}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Real-time market data for {stock.symbol}. Track live stock prices, intraday charts, and key statistics.
+              Real-time market data for {stock?.symbol}. Track live stock prices, intraday charts, and key statistics.
               This page updates automatically with the latest market information.
             </p>
           </CardContent>
