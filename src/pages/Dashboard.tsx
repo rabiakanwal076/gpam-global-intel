@@ -340,10 +340,10 @@ export function Dashboard() {
                   {(loadingEconomic ? Array.from({ length: 5 }) : economicEvents.slice(0, 5)).map((event: any, idx: number) => (
                     <div key={idx} className="p-2 rounded bg-muted/20 border border-border/10">
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs font-semibold">{loadingEconomic ? '—' : event.event}</p>
-                        <Badge variant="outline" className="text-xs">{loadingEconomic ? '—' : event.country}</Badge>
+                        <p className="text-xs font-semibold">{loadingEconomic ? '—' : (event?.event || '—')}</p>
+                        <Badge variant="outline" className="text-xs">{loadingEconomic ? '—' : (event?.country || '—')}</Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">{loadingEconomic ? 'Loading...' : new Date(event.date).toLocaleDateString()}</p>
+                      <p className="text-xs text-muted-foreground">{loadingEconomic ? 'Loading...' : (event?.date ? new Date(event.date).toLocaleDateString() : 'N/A')}</p>
                     </div>
                   ))}
                 </div>
@@ -358,12 +358,12 @@ export function Dashboard() {
               <CardContent className="pt-4">
                 <div className="space-y-2">
                   {(loadingEarnings ? Array.from({ length: 5 }) : earningsEvents.slice(0, 5)).map((event: any, idx: number) => (
-                    <div key={idx} className="clickable-row p-2 rounded bg-muted/20 border border-border/10" onClick={() => !loadingEarnings && handleStockClick(event.symbol)}>
+                    <div key={idx} className="clickable-row p-2 rounded bg-muted/20 border border-border/10" onClick={() => !loadingEarnings && event?.symbol && handleStockClick(event.symbol)}>
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-sm font-semibold">{loadingEarnings ? '—' : event.symbol}</p>
-                        <p className="text-xs text-muted-foreground">{loadingEarnings ? '—' : event.time}</p>
+                        <p className="text-sm font-semibold">{loadingEarnings ? '—' : (event?.symbol || '—')}</p>
+                        <p className="text-xs text-muted-foreground">{loadingEarnings ? '—' : (event?.time || '—')}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground">{loadingEarnings ? 'Loading...' : new Date(event.date).toLocaleDateString()}</p>
+                      <p className="text-xs text-muted-foreground">{loadingEarnings ? 'Loading...' : (event?.date ? new Date(event.date).toLocaleDateString() : 'N/A')}</p>
                     </div>
                   ))}
                 </div>
@@ -380,11 +380,11 @@ export function Dashboard() {
                   {(loadingIPO ? Array.from({ length: 5 }) : ipoEvents.slice(0, 5)).map((event: any, idx: number) => (
                     <div key={idx} className="p-2 rounded bg-muted/20 border border-border/10">
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-sm font-semibold">{loadingIPO ? '—' : event.symbol}</p>
-                        <Badge variant="outline" className="text-xs">{loadingIPO ? '—' : event.exchange}</Badge>
+                        <p className="text-sm font-semibold">{loadingIPO ? '—' : (event?.symbol || '—')}</p>
+                        <Badge variant="outline" className="text-xs">{loadingIPO ? '—' : (event?.exchange || '—')}</Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">{loadingIPO ? 'Loading...' : event.company}</p>
-                      <p className="text-xs text-muted-foreground">{loadingIPO ? '—' : new Date(event.date).toLocaleDateString()}</p>
+                      <p className="text-xs text-muted-foreground">{loadingIPO ? 'Loading...' : (event?.company || '—')}</p>
+                      <p className="text-xs text-muted-foreground">{loadingIPO ? '—' : (event?.date ? new Date(event.date).toLocaleDateString() : 'N/A')}</p>
                     </div>
                   ))}
                 </div>
@@ -405,17 +405,17 @@ export function Dashboard() {
               <CardContent className="pt-4">
                 <div className="space-y-2">
                   {(loadingInsider ? Array.from({ length: 5 }) : insiderTrades.slice(0, 5)).map((trade: any, idx: number) => (
-                    <div key={idx} className="clickable-row p-3 rounded bg-muted/20 border border-border/10" onClick={() => !loadingInsider && handleStockClick(trade.symbol)}>
+                    <div key={idx} className="clickable-row p-3 rounded bg-muted/20 border border-border/10" onClick={() => !loadingInsider && trade?.symbol && handleStockClick(trade.symbol)}>
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-sm font-semibold">{loadingInsider ? '—' : trade.symbol}</p>
-                        <Badge variant={trade.transactionType?.includes('Sale') ? 'destructive' : 'default'} className="text-xs">
-                          {loadingInsider ? '—' : trade.transactionType}
+                        <p className="text-sm font-semibold">{loadingInsider ? '—' : (trade?.symbol || '—')}</p>
+                        <Badge variant={trade?.transactionType?.includes('Sale') ? 'destructive' : 'default'} className="text-xs">
+                          {loadingInsider ? '—' : (trade?.transactionType || 'N/A')}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground mb-1">{loadingInsider ? 'Loading...' : trade.reportingName}</p>
+                      <p className="text-xs text-muted-foreground mb-1">{loadingInsider ? 'Loading...' : (trade?.reportingName || 'Unknown')}</p>
                       <div className="flex items-center justify-between">
-                        <p className="text-xs">{loadingInsider ? '—' : `${trade.securitiesTransacted?.toLocaleString()} shares`}</p>
-                        <p className="text-xs">{loadingInsider ? '—' : `$${trade.price?.toFixed(2)}`}</p>
+                        <p className="text-xs">{loadingInsider ? '—' : `${(trade?.securitiesTransacted ?? 0).toLocaleString()} shares`}</p>
+                        <p className="text-xs">{loadingInsider ? '—' : `$${(trade?.price ?? 0).toFixed(2)}`}</p>
                       </div>
                     </div>
                   ))}
@@ -431,17 +431,17 @@ export function Dashboard() {
               <CardContent className="pt-4">
                 <div className="space-y-2">
                   {(loadingSenate ? Array.from({ length: 5 }) : senateTrades.slice(0, 5)).map((trade: any, idx: number) => (
-                    <div key={idx} className="clickable-row p-3 rounded bg-muted/20 border border-border/10" onClick={() => !loadingSenate && handleStockClick(trade.symbol)}>
+                    <div key={idx} className="clickable-row p-3 rounded bg-muted/20 border border-border/10" onClick={() => !loadingSenate && trade?.symbol && handleStockClick(trade.symbol)}>
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-sm font-semibold">{loadingSenate ? '—' : trade.symbol}</p>
-                        <Badge variant={trade.type?.includes('sale') ? 'destructive' : 'default'} className="text-xs">
-                          {loadingSenate ? '—' : trade.type}
+                        <p className="text-sm font-semibold">{loadingSenate ? '—' : (trade?.symbol || '—')}</p>
+                        <Badge variant={trade?.type?.includes('sale') ? 'destructive' : 'default'} className="text-xs">
+                          {loadingSenate ? '—' : (trade?.type || 'N/A')}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground mb-1">{loadingSenate ? 'Loading...' : trade.senator}</p>
+                      <p className="text-xs text-muted-foreground mb-1">{loadingSenate ? 'Loading...' : (trade?.senator || 'Unknown')}</p>
                       <div className="flex items-center justify-between">
-                        <p className="text-xs">{loadingSenate ? '—' : trade.amount}</p>
-                        <p className="text-xs text-muted-foreground">{loadingSenate ? '—' : new Date(trade.transactionDate).toLocaleDateString()}</p>
+                        <p className="text-xs">{loadingSenate ? '—' : (trade?.amount || 'N/A')}</p>
+                        <p className="text-xs text-muted-foreground">{loadingSenate ? '—' : (trade?.transactionDate ? new Date(trade.transactionDate).toLocaleDateString() : 'N/A')}</p>
                       </div>
                     </div>
                   ))}
@@ -460,20 +460,20 @@ export function Dashboard() {
                 {(loadingNews ? Array.from({ length: 6 }) : marketNews.slice(0, 6)).map((news: any, idx: number) => (
                   <a 
                     key={idx} 
-                    href={loadingNews ? '#' : news.url} 
+                    href={loadingNews ? '#' : (news?.url || '#')} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="clickable-row p-4 rounded bg-muted/20 border border-border/10 block"
                   >
                     <div className="flex gap-3">
-                      {news.image && (
+                      {news?.image && (
                         <img src={news.image} alt="" className="w-20 h-20 object-cover rounded" />
                       )}
                       <div className="flex-1">
-                        <p className="text-sm font-semibold mb-1 line-clamp-2">{loadingNews ? 'Loading...' : news.title}</p>
+                        <p className="text-sm font-semibold mb-1 line-clamp-2">{loadingNews ? 'Loading...' : (news?.title || 'No title')}</p>
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>{loadingNews ? '—' : news.site}</span>
-                          <span>{loadingNews ? '—' : new Date(news.publishedDate).toLocaleDateString()}</span>
+                          <span>{loadingNews ? '—' : (news?.site || '—')}</span>
+                          <span>{loadingNews ? '—' : (news?.publishedDate ? new Date(news.publishedDate).toLocaleDateString() : '—')}</span>
                         </div>
                       </div>
                     </div>
