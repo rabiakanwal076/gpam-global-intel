@@ -123,12 +123,12 @@ export function Dashboard() {
                     <div key={idx} className="flex items-center justify-between p-3 rounded bg-muted/30 border border-border/20">
                       <div className="flex items-center gap-2">
                         <Landmark className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{loadingComm ? '—' : item.name}</span>
+                        <span className="font-medium">{loadingComm ? '—' : (item?.name || '—')}</span>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">{loadingComm ? '—' : `$${item.price?.toFixed(2)}`}</p>
-                        <p className={`text-xs ${(item.changesPercentage ?? 0) >= 0 ? 'text-success' : 'text-danger'}`}>
-                          {loadingComm ? '—' : `${(item.changesPercentage ?? 0) >= 0 ? '+' : ''}${item.changesPercentage?.toFixed(2)}%`}
+                        <p className="font-semibold">{loadingComm ? '—' : `$${(item?.price ?? 0).toFixed(2)}`}</p>
+                        <p className={`text-xs ${(item?.changesPercentage ?? 0) >= 0 ? 'text-success' : 'text-danger'}`}>
+                          {loadingComm ? '—' : `${(item?.changesPercentage ?? 0) >= 0 ? '+' : ''}${(item?.changesPercentage ?? 0).toFixed(2)}%`}
                         </p>
                       </div>
                     </div>
@@ -151,12 +151,12 @@ export function Dashboard() {
                     <div key={idx} className="flex items-center justify-between p-3 rounded bg-muted/30 border border-border/20">
                       <div className="flex items-center gap-2">
                         <Globe className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{loadingFx ? '—' : item.symbol}</span>
+                        <span className="font-medium">{loadingFx ? '—' : (item?.symbol || '—')}</span>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">{loadingFx ? '—' : item.price?.toFixed(4)}</p>
-                        <p className={`text-xs ${(item.changesPercentage ?? 0) >= 0 ? 'text-success' : 'text-danger'}`}>
-                          {loadingFx ? '—' : `${(item.changesPercentage ?? 0) >= 0 ? '+' : ''}${item.changesPercentage?.toFixed(2)}%`}
+                        <p className="font-semibold">{loadingFx ? '—' : (item?.price ?? 0).toFixed(4)}</p>
+                        <p className={`text-xs ${(item?.changesPercentage ?? 0) >= 0 ? 'text-success' : 'text-danger'}`}>
+                          {loadingFx ? '—' : `${(item?.changesPercentage ?? 0) >= 0 ? '+' : ''}${(item?.changesPercentage ?? 0).toFixed(2)}%`}
                         </p>
                       </div>
                     </div>
@@ -178,13 +178,13 @@ export function Dashboard() {
                   {(loadingIndices ? Array.from({ length: 3 }) : indicesList.slice(0, 3)).map((item: any, idx: number) => (
                     <div key={idx} className="flex items-center justify-between p-3 rounded bg-muted/30 border border-border/20">
                       <div>
-                        <p className="font-medium">{loadingIndices ? '—' : item.symbol}</p>
-                        <p className="text-xs text-muted-foreground">{loadingIndices ? 'Loading...' : (item.name || '')}</p>
+                        <p className="font-medium">{loadingIndices ? '—' : (item?.symbol || '—')}</p>
+                        <p className="text-xs text-muted-foreground">{loadingIndices ? 'Loading...' : (item?.name || '')}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">{loadingIndices ? '—' : item.price?.toFixed(2)}</p>
-                        <p className={`text-xs ${(item.changesPercentage ?? 0) >= 0 ? 'text-success' : 'text-danger'}`}>
-                          {loadingIndices ? '—' : `${(item.changesPercentage ?? 0) >= 0 ? '+' : ''}${item.changesPercentage?.toFixed(2)}%`}
+                        <p className="font-semibold">{loadingIndices ? '—' : (item?.price ?? 0).toFixed(2)}</p>
+                        <p className={`text-xs ${(item?.changesPercentage ?? 0) >= 0 ? 'text-success' : 'text-danger'}`}>
+                          {loadingIndices ? '—' : `${(item?.changesPercentage ?? 0) >= 0 ? '+' : ''}${(item?.changesPercentage ?? 0).toFixed(2)}%`}
                         </p>
                       </div>
                     </div>
@@ -204,10 +204,10 @@ export function Dashboard() {
               <CardContent className="pt-4">
                 <div className="space-y-3">
                   {(loadingSectors ? Array.from({ length: 3 }) : sectorPerf.slice(0, 3)).map((item: any, idx: number) => {
-                    const change = parseFloat(item.changesPercentage?.replace('%', '') || '0');
+                    const change = parseFloat(item?.changesPercentage?.replace('%', '') || '0');
                     return (
                       <div key={idx} className="flex items-center justify-between p-3 rounded bg-muted/30 border border-border/20">
-                        <span className="font-medium">{loadingSectors ? '—' : item.sector}</span>
+                        <span className="font-medium">{loadingSectors ? '—' : (item?.sector || '—')}</span>
                         <p className={`text-sm font-semibold ${change >= 0 ? 'text-success' : 'text-danger'}`}>
                           {loadingSectors ? '—' : `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`}
                         </p>
@@ -247,16 +247,16 @@ export function Dashboard() {
                   {(loadingGainers ? Array.from({ length: 5 }) : gainers.slice(0, 5)).map((item: any, idx: number) => (
                     <div 
                       key={idx} 
-                      onClick={() => !loadingGainers && handleStockClick(item.symbol)}
+                      onClick={() => !loadingGainers && item?.symbol && handleStockClick(item.symbol)}
                       className="clickable-row flex items-center justify-between p-2 rounded bg-success/5 border border-success/10"
                     >
                       <div>
-                        <p className="text-sm font-semibold">{loadingGainers ? '—' : item.symbol}</p>
-                        <p className="text-xs text-muted-foreground">{loadingGainers ? 'Loading…' : (item.name || '')}</p>
+                        <p className="text-sm font-semibold">{loadingGainers ? '—' : (item?.symbol || '—')}</p>
+                        <p className="text-xs text-muted-foreground">{loadingGainers ? 'Loading…' : (item?.name || '')}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold">{loadingGainers ? '—' : `$${item.price?.toFixed(2)}`}</p>
-                        <p className="text-xs text-success">{loadingGainers ? '—' : `+${item.changesPercentage?.toFixed(2)}%`}</p>
+                        <p className="text-sm font-semibold">{loadingGainers ? '—' : `$${(item?.price ?? 0).toFixed(2)}`}</p>
+                        <p className="text-xs text-success">{loadingGainers ? '—' : `+${(item?.changesPercentage ?? 0).toFixed(2)}%`}</p>
                       </div>
                     </div>
                   ))}
@@ -277,16 +277,16 @@ export function Dashboard() {
                   {(loadingLosers ? Array.from({ length: 5 }) : losers.slice(0, 5)).map((item: any, idx: number) => (
                     <div 
                       key={idx}
-                      onClick={() => !loadingLosers && handleStockClick(item.symbol)}
+                      onClick={() => !loadingLosers && item?.symbol && handleStockClick(item.symbol)}
                       className="clickable-row flex items-center justify-between p-2 rounded bg-danger/5 border border-danger/10"
                     >
                       <div>
-                        <p className="text-sm font-semibold">{loadingLosers ? '—' : item.symbol}</p>
-                        <p className="text-xs text-muted-foreground">{loadingLosers ? 'Loading…' : (item.name || '')}</p>
+                        <p className="text-sm font-semibold">{loadingLosers ? '—' : (item?.symbol || '—')}</p>
+                        <p className="text-xs text-muted-foreground">{loadingLosers ? 'Loading…' : (item?.name || '')}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold">{loadingLosers ? '—' : `$${item.price?.toFixed(2)}`}</p>
-                        <p className="text-xs text-danger">{loadingLosers ? '—' : `${item.changesPercentage?.toFixed(2)}%`}</p>
+                        <p className="text-sm font-semibold">{loadingLosers ? '—' : `$${(item?.price ?? 0).toFixed(2)}`}</p>
+                        <p className="text-xs text-danger">{loadingLosers ? '—' : `${(item?.changesPercentage ?? 0).toFixed(2)}%`}</p>
                       </div>
                     </div>
                   ))}
@@ -307,16 +307,16 @@ export function Dashboard() {
                   {(loadingActives ? Array.from({ length: 5 }) : actives.slice(0, 5)).map((item: any, idx: number) => (
                     <div 
                       key={idx}
-                      onClick={() => !loadingActives && handleStockClick(item.symbol)}
+                      onClick={() => !loadingActives && item?.symbol && handleStockClick(item.symbol)}
                       className="clickable-row flex items-center justify-between p-2 rounded bg-primary/5 border border-primary/10"
                     >
                       <div>
-                        <p className="text-sm font-semibold">{loadingActives ? '—' : item.symbol}</p>
-                        <p className="text-xs text-muted-foreground">{loadingActives ? 'Loading…' : (item.name || '')}</p>
+                        <p className="text-sm font-semibold">{loadingActives ? '—' : (item?.symbol || '—')}</p>
+                        <p className="text-xs text-muted-foreground">{loadingActives ? 'Loading…' : (item?.name || '')}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold">{loadingActives ? '—' : `$${item.price?.toFixed(2)}`}</p>
-                        <p className="text-xs text-primary">{loadingActives ? '—' : `Vol: ${(item.volume || 0).toLocaleString()}`}</p>
+                        <p className="text-sm font-semibold">{loadingActives ? '—' : `$${(item?.price ?? 0).toFixed(2)}`}</p>
+                        <p className="text-xs text-primary">{loadingActives ? '—' : `Vol: ${(item?.volume || 0).toLocaleString()}`}</p>
                       </div>
                     </div>
                   ))}
