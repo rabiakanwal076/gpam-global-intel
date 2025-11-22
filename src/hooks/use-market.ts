@@ -21,14 +21,16 @@ export function useCryptoQuotes(symbols?: string[], options?: { enabled?: boolea
       });
       if (error) throw error;
       const arr = Array.isArray(data) ? data : [];
-      return arr.map((q: any) => ({
-        symbol: q.symbol ?? q.ticker ?? q.symbol ?? "",
-        name: q.name ?? q.coin ?? q.symbol ?? "",
-        price: Number(q.price ?? q.ask ?? q.bid ?? 0),
-        change: Number(q.change ?? 0),
-        changesPercentage: Number(q.changesPercentage ?? q.changePercent ?? 0),
-        marketCap: Number(q.marketCap ?? 0),
-      }));
+      return arr
+        .filter((q: any) => q && (q.symbol || q.ticker))
+        .map((q: any) => ({
+          symbol: q.symbol ?? q.ticker ?? "",
+          name: q.name ?? q.coin ?? q.symbol ?? "",
+          price: Number(q.price ?? q.ask ?? q.bid ?? 0),
+          change: Number(q.change ?? 0),
+          changesPercentage: Number(q.changesPercentage ?? q.changePercent ?? 0),
+          marketCap: Number(q.marketCap ?? 0),
+        }));
     },
   });
 }
@@ -44,13 +46,15 @@ export function useCommodities(options?: { enabled?: boolean }) {
       });
       if (error) throw error;
       const arr = Array.isArray(data) ? data : [];
-      return arr.map((q: any) => ({
-        symbol: q.symbol ?? q.ticker ?? "",
-        name: q.name ?? q.symbol ?? "",
-        price: Number(q.price ?? 0),
-        change: Number(q.change ?? 0),
-        changesPercentage: Number(q.changesPercentage ?? 0),
-      }));
+      return arr
+        .filter((q: any) => q && (q.symbol || q.ticker))
+        .map((q: any) => ({
+          symbol: q.symbol ?? q.ticker ?? "",
+          name: q.name ?? q.symbol ?? "",
+          price: Number(q.price ?? 0),
+          change: Number(q.change ?? 0),
+          changesPercentage: Number(q.changesPercentage ?? 0),
+        }));
     },
   });
 }
@@ -66,13 +70,15 @@ export function useForexPairs(pairs?: string[], options?: { enabled?: boolean })
       });
       if (error) throw error;
       const arr = Array.isArray(data) ? data : [];
-      return arr.map((q: any) => ({
-        symbol: q.symbol ?? q.ticker ?? "",
-        name: q.name ?? q.symbol ?? "",
-        price: Number(q.price ?? q.bid ?? 0),
-        change: Number(q.change ?? 0),
-        changesPercentage: Number(q.changesPercentage ?? 0),
-      }));
+      return arr
+        .filter((q: any) => q && (q.symbol || q.ticker))
+        .map((q: any) => ({
+          symbol: q.symbol ?? q.ticker ?? "",
+          name: q.name ?? q.symbol ?? "",
+          price: Number(q.price ?? q.bid ?? 0),
+          change: Number(q.change ?? 0),
+          changesPercentage: Number(q.changesPercentage ?? 0),
+        }));
     },
   });
 }
@@ -88,14 +94,16 @@ export function useIndices(options?: { enabled?: boolean }) {
       });
       if (error) throw error;
       const arr = Array.isArray(data) ? data : [];
-      return arr.map((q: any) => ({
-        symbol: q.symbol ?? q.ticker ?? "",
-        name: q.name ?? q.symbol ?? "",
-        price: Number(q.price ?? 0),
-        change: Number(q.change ?? 0),
-        changesPercentage: Number(q.changesPercentage ?? 0),
-        marketCap: Number(q.marketCap ?? 0),
-      }));
+      return arr
+        .filter((q: any) => q && (q.symbol || q.ticker))
+        .map((q: any) => ({
+          symbol: q.symbol ?? q.ticker ?? "",
+          name: q.name ?? q.symbol ?? "",
+          price: Number(q.price ?? 0),
+          change: Number(q.change ?? 0),
+          changesPercentage: Number(q.changesPercentage ?? 0),
+          marketCap: Number(q.marketCap ?? 0),
+        }));
     },
   });
 }
