@@ -28,13 +28,15 @@ export function useStockQuotes(symbols: string[], options?: { enabled?: boolean 
         body: { action: "quotes", symbols },
       });
       if (error) throw error;
-      return (data as any[]).map((q: any) => ({
-        symbol: q.symbol,
-        name: q.name ?? q.symbol,
-        price: Number(q.price ?? q.priceAvg ?? q.previousClose ?? 0),
-        change: Number(q.change ?? 0),
-        changesPercentage: Number(q.changesPercentage ?? q.changePercent ?? 0),
-      }));
+      return ((data as any[]) || [])
+        .filter((q: any) => q && q.symbol)
+        .map((q: any) => ({
+          symbol: q.symbol,
+          name: q.name ?? q.symbol,
+          price: Number(q.price ?? q.priceAvg ?? q.previousClose ?? 0),
+          change: Number(q.change ?? 0),
+          changesPercentage: Number(q.changesPercentage ?? q.changePercent ?? 0),
+        }));
     },
   });
 }
@@ -48,14 +50,16 @@ export function useTopMovers(type: "gainers" | "losers" | "actives" = "gainers")
         body: { action: "top_movers", type },
       });
       if (error) throw error;
-      return (data as any[]).map((q: any) => ({
-        symbol: q.symbol,
-        name: q.name ?? q.companyName ?? q.symbol,
-        price: Number(q.price ?? q.priceAvg ?? q.previousClose ?? 0),
-        change: Number(q.change ?? 0),
-        changesPercentage: Number(q.changesPercentage ?? q.changePercent ?? 0),
-        volume: Number(q.volume ?? 0),
-      }));
+      return ((data as any[]) || [])
+        .filter((q: any) => q && q.symbol)
+        .map((q: any) => ({
+          symbol: q.symbol,
+          name: q.name ?? q.companyName ?? q.symbol,
+          price: Number(q.price ?? q.priceAvg ?? q.previousClose ?? 0),
+          change: Number(q.change ?? 0),
+          changesPercentage: Number(q.changesPercentage ?? q.changePercent ?? 0),
+          volume: Number(q.volume ?? 0),
+        }));
     },
   });
 }
@@ -69,11 +73,13 @@ export function useSymbolSearch(query: string) {
         body: { action: "search", q: query },
       });
       if (error) throw error;
-      return (data as any[]).map((r: any) => ({
-        symbol: r.symbol,
-        name: r.name ?? r.companyName ?? r.symbol,
-        region: r.region,
-      }));
+      return ((data as any[]) || [])
+        .filter((r: any) => r && r.symbol)
+        .map((r: any) => ({
+          symbol: r.symbol,
+          name: r.name ?? r.companyName ?? r.symbol,
+          region: r.region,
+        }));
     },
   });
 }
@@ -88,7 +94,9 @@ export function useIntraday(symbol: string, interval: "1min" | "5min" | "15min" 
         body: { action: "intraday", symbol, interval },
       });
       if (error) throw error;
-      return (data as any[]).map((p: any) => ({ time: String(p.time), close: Number(p.close) }));
+      return ((data as any[]) || [])
+        .filter((p: any) => p && p.time && p.close != null)
+        .map((p: any) => ({ time: String(p.time), close: Number(p.close) }));
     },
   });
 }
