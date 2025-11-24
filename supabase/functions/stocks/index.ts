@@ -38,8 +38,10 @@ serve(async (req) => {
 
     const FMP_KEY = Deno.env.get("FMP_API_KEY");
     const AV_KEY = Deno.env.get("ALPHA_VANTAGE_API_KEY");
+    const FINNHUB_KEY = Deno.env.get("FINNHUB_API_KEY");
 
     const fmpBase = "https://financialmodelingprep.com/api/v3";
+    const finnhubBase = "https://finnhub.io/api/v1";
 
     if (action === "quotes") {
       const symbols: string[] = body?.symbols ?? [];
@@ -105,9 +107,13 @@ serve(async (req) => {
         const endpoint = type === "losers" ? "losers" : type === "actives" ? "actives" : "gainers";
         const url = `${fmpBase}/stock_market/${endpoint}?apikey=${FMP_KEY}`;
         const data = await fetchJson(url);
-        return json(data);
+        if (Array.isArray(data) && data.length > 0) {
+          return json(data);
+        }
       }
-      return json({ error: "FMP_API_KEY required for top movers" }, 400);
+      
+      // Return empty array if no data available
+      return json([]);
     }
 
     if (action === "search") {
@@ -152,83 +158,174 @@ serve(async (req) => {
     }
 
     if (action === "commodities") {
-      if (!FMP_KEY) {
-        return json({ error: "FMP_API_KEY required for commodities" }, 400);
+      if (FMP_KEY) {
+        const url = `${fmpBase}/quotes/commodity?apikey=${FMP_KEY}`;
+        const data = await fetchJson(url);
+        if (Array.isArray(data) && data.length > 0) {
+          return json(data);
+        }
       }
-      const url = `${fmpBase}/quotes/commodity?apikey=${FMP_KEY}`;
-      const data = await fetchJson(url);
-      return json(Array.isArray(data) ? data : []);
+      
+      // Finnhub doesn't have commodities data
+      return json([]);
     }
 
     if (action === "forex") {
       const pairs: string[] = body?.pairs ?? [];
-      if (!FMP_KEY) {
-        return json({ error: "FMP_API_KEY required for forex" }, 400);
+      if (FMP_KEY) {
+        if (pairs.length > 0) {
+          const list = pairs.join(",");
+          const url = `${fmpBase}/quote/${encodeURIComponent(list)}?apikey=${FMP_KEY}`;
+          const data = await fetchJson(url);
+          if (Array.isArray(data) && data.length > 0) {
+            return json(data);
+          }
+        } else {
+          const url = `${fmpBase}/fx?apikey=${FMP_KEY}`;
+          const data = await fetchJson(url);
+          if (Array.isArray(data) && data.length > 0) {
+            return json(data);
+          }
+        }
       }
-      if (pairs.length > 0) {
-        const list = pairs.join(",");
-        const url = `${fmpBase}/quote/${encodeURIComponent(list)}?apikey=${FMP_KEY}`;
-        const data = await fetchJson(url);
-        return json(data);
-      } else {
-        const url = `${fmpBase}/fx?apikey=${FMP_KEY}`;
-        const data = await fetchJson(url);
-        return json(Array.isArray(data) ? data : []);
+      
+      if (FINNHUB_KEY && pairs.length > 0) {
+        const results = await Promise.all(
+          pairs.map(async (pair) => {
+            try {
+              const url = `${finnhubBase}/forex/rates?base=${pair.substring(0, 3)}&token=${FINNHUB_KEY}`;
+              const data = await fetchJson(url);
+              return {
+                symbol: pair,
+                price: data?.quote?.[pair.substring(3, 6)] || 0,
+                change: 0,
+                changesPercentage: 0,
+              };
+            } catch (e) {
+              return null;
+            }
+          })
+        );
+        return json(results.filter(r => r !== null));
       }
+      
+      return json([]);
     }
 
     if (action === "indices") {
-      if (!FMP_KEY) {
-        return json({ error: "FMP_API_KEY required for indices" }, 400);
+      if (FMP_KEY) {
+        const url = `${fmpBase}/quotes/index?apikey=${FMP_KEY}`;
+        const data = await fetchJson(url);
+        if (Array.isArray(data) && data.length > 0) {
+          return json(data);
+        }
       }
-      const url = `${fmpBase}/quotes/index?apikey=${FMP_KEY}`;
-      const data = await fetchJson(url);
-      return json(Array.isArray(data) ? data : []);
+      
+      // Finnhub doesn't have indices data in the same format
+      return json([]);
     }
 
     if (action === "economic_calendar") {
-      if (!FMP_KEY) {
-        return json({ error: "FMP_API_KEY required for economic calendar" }, 400);
+      if (FMP_KEY) {
+        const url = `${fmpBase}/economic_calendar?apikey=${FMP_KEY}`;
+        const data = await fetchJson(url);
+        if (Array.isArray(data) && data.length > 0) {
+          return json(data.slice(0, 10));
+        }
       }
-      const url = `${fmpBase}/economic_calendar?apikey=${FMP_KEY}`;
-      const data = await fetchJson(url);
-      return json(Array.isArray(data) ? data.slice(0, 10) : []);
+      
+      if (FINNHUB_KEY) {
+        const url = `${finnhubBase}/calendar/economic?token=${FINNHUB_KEY}`;
+        const data = await fetchJson(url);
+        const events = data?.economicCalendar || [];
+        return json(Array.isArray(events) ? events.slice(0, 10) : []);
+      }
+      
+      return json([]);
     }
 
     if (action === "earnings_calendar") {
-      if (!FMP_KEY) {
-        return json({ error: "FMP_API_KEY required for earnings calendar" }, 400);
+      if (FMP_KEY) {
+        const url = `${fmpBase}/earning_calendar?apikey=${FMP_KEY}`;
+        const data = await fetchJson(url);
+        if (Array.isArray(data) && data.length > 0) {
+          return json(data.slice(0, 10));
+        }
       }
-      const url = `${fmpBase}/earning_calendar?apikey=${FMP_KEY}`;
-      const data = await fetchJson(url);
-      return json(Array.isArray(data) ? data.slice(0, 10) : []);
+      
+      if (FINNHUB_KEY) {
+        const today = new Date().toISOString().split('T')[0];
+        const url = `${finnhubBase}/calendar/earnings?from=${today}&to=${today}&token=${FINNHUB_KEY}`;
+        const data = await fetchJson(url);
+        const earnings = data?.earningsCalendar || [];
+        return json(Array.isArray(earnings) ? earnings.slice(0, 10) : []);
+      }
+      
+      return json([]);
     }
 
     if (action === "ipo_calendar") {
-      if (!FMP_KEY) {
-        return json({ error: "FMP_API_KEY required for IPO calendar" }, 400);
+      if (FMP_KEY) {
+        const url = `${fmpBase}/ipo_calendar?apikey=${FMP_KEY}`;
+        const data = await fetchJson(url);
+        if (Array.isArray(data) && data.length > 0) {
+          return json(data.slice(0, 10));
+        }
       }
-      const url = `${fmpBase}/ipo_calendar?apikey=${FMP_KEY}`;
-      const data = await fetchJson(url);
-      return json(Array.isArray(data) ? data.slice(0, 10) : []);
+      
+      if (FINNHUB_KEY) {
+        const today = new Date().toISOString().split('T')[0];
+        const url = `${finnhubBase}/calendar/ipo?from=${today}&to=${today}&token=${FINNHUB_KEY}`;
+        const data = await fetchJson(url);
+        const ipos = data?.ipoCalendar || [];
+        return json(Array.isArray(ipos) ? ipos.slice(0, 10) : []);
+      }
+      
+      return json([]);
     }
 
     if (action === "insider_trading") {
-      if (!FMP_KEY) {
-        return json({ error: "FMP_API_KEY required for insider trading" }, 400);
+      if (FMP_KEY) {
+        const url = `${fmpBase}/insider-trading?page=0&apikey=${FMP_KEY}`;
+        const data = await fetchJson(url);
+        if (Array.isArray(data) && data.length > 0) {
+          return json(data.slice(0, 10));
+        }
       }
-      const url = `${fmpBase}/insider-trading?page=0&apikey=${FMP_KEY}`;
-      const data = await fetchJson(url);
-      return json(Array.isArray(data) ? data.slice(0, 10) : []);
+      
+      if (FINNHUB_KEY) {
+        const symbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"];
+        const results = [];
+        
+        for (const symbol of symbols) {
+          try {
+            const url = `${finnhubBase}/stock/insider-transactions?symbol=${symbol}&token=${FINNHUB_KEY}`;
+            const data = await fetchJson(url);
+            if (data?.data && Array.isArray(data.data)) {
+              results.push(...data.data.slice(0, 2));
+            }
+          } catch (e) {
+            console.error(`Failed to fetch insider trading for ${symbol}:`, e);
+          }
+        }
+        
+        return json(results.slice(0, 10));
+      }
+      
+      return json([]);
     }
 
     if (action === "senate_trading") {
-      if (!FMP_KEY) {
-        return json({ error: "FMP_API_KEY required for senate trading" }, 400);
+      if (FMP_KEY) {
+        const url = `${fmpBase}/senate-trading?page=0&apikey=${FMP_KEY}`;
+        const data = await fetchJson(url);
+        if (Array.isArray(data) && data.length > 0) {
+          return json(data.slice(0, 10));
+        }
       }
-      const url = `${fmpBase}/senate-trading?page=0&apikey=${FMP_KEY}`;
-      const data = await fetchJson(url);
-      return json(Array.isArray(data) ? data.slice(0, 10) : []);
+      
+      // Finnhub doesn't have senate trading data
+      return json([]);
     }
 
     if (action === "company_profile") {
@@ -265,21 +362,34 @@ serve(async (req) => {
     }
 
     if (action === "market_news") {
-      if (!FMP_KEY) {
-        return json({ error: "FMP_API_KEY required for market news" }, 400);
+      if (FMP_KEY) {
+        const url = `${fmpBase}/stock_news?page=0&apikey=${FMP_KEY}`;
+        const data = await fetchJson(url);
+        if (Array.isArray(data) && data.length > 0) {
+          return json(data.slice(0, 10));
+        }
       }
-      const url = `${fmpBase}/stock_news?page=0&apikey=${FMP_KEY}`;
-      const data = await fetchJson(url);
-      return json(Array.isArray(data) ? data.slice(0, 10) : []);
+      
+      if (FINNHUB_KEY) {
+        const url = `${finnhubBase}/news?category=general&token=${FINNHUB_KEY}`;
+        const data = await fetchJson(url);
+        return json(Array.isArray(data) ? data.slice(0, 10) : []);
+      }
+      
+      return json([]);
     }
 
     if (action === "sector_performance") {
-      if (!FMP_KEY) {
-        return json({ error: "FMP_API_KEY required for sector performance" }, 400);
+      if (FMP_KEY) {
+        const url = `${fmpBase}/sector-performance?apikey=${FMP_KEY}`;
+        const data = await fetchJson(url);
+        if (Array.isArray(data) && data.length > 0) {
+          return json(data);
+        }
       }
-      const url = `${fmpBase}/sector-performance?apikey=${FMP_KEY}`;
-      const data = await fetchJson(url);
-      return json(Array.isArray(data) ? data : []);
+      
+      // Finnhub doesn't have sector performance, return empty for now
+      return json([]);
     }
 
     return json({ error: "Unknown action" }, 400);
