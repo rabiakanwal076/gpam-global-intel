@@ -237,10 +237,16 @@ export function Dashboard() {
             {/* Top Gainers */}
             <Card className="financial-card hover-lift">
               <CardHeader className="financial-card-header">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-success" />
-                  Top Gainers
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-success" />
+                    Top Gainers
+                  </CardTitle>
+                  <Badge className="bg-success/10 text-success border-success/20">
+                    <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse mr-1.5"></div>
+                    Live
+                  </Badge>
+                </div>
               </CardHeader>
               <CardContent className="pt-4">
                 <div className="space-y-2">
@@ -248,15 +254,15 @@ export function Dashboard() {
                     <div 
                       key={idx} 
                       onClick={() => !loadingGainers && item?.symbol && handleStockClick(item.symbol)}
-                      className="clickable-row flex items-center justify-between p-2 rounded bg-success/5 border border-success/10"
+                      className="clickable-row flex items-center justify-between p-2 rounded bg-success/5 border border-success/10 transition-all hover:bg-success/10"
                     >
                       <div>
                         <p className="text-sm font-semibold">{loadingGainers ? '—' : (item?.symbol || '—')}</p>
                         <p className="text-xs text-muted-foreground">{loadingGainers ? 'Loading…' : (item?.name || '')}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold">{loadingGainers ? '—' : `$${(item?.price ?? 0).toFixed(2)}`}</p>
-                        <p className="text-xs text-success">{loadingGainers ? '—' : `+${(item?.changesPercentage ?? 0).toFixed(2)}%`}</p>
+                        <p className="text-sm font-semibold animate-pulse">{loadingGainers ? '—' : `$${(item?.price ?? 0).toFixed(2)}`}</p>
+                        <p className="text-xs text-success animate-pulse">{loadingGainers ? '—' : `+${(item?.changesPercentage ?? 0).toFixed(2)}%`}</p>
                       </div>
                     </div>
                   ))}
@@ -267,10 +273,16 @@ export function Dashboard() {
             {/* Top Losers */}
             <Card className="financial-card hover-lift">
               <CardHeader className="financial-card-header">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <TrendingDown className="h-5 w-5 text-danger" />
-                  Top Losers
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <TrendingDown className="h-5 w-5 text-danger" />
+                    Top Losers
+                  </CardTitle>
+                  <Badge className="bg-success/10 text-success border-success/20">
+                    <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse mr-1.5"></div>
+                    Live
+                  </Badge>
+                </div>
               </CardHeader>
               <CardContent className="pt-4">
                 <div className="space-y-2">
@@ -278,15 +290,15 @@ export function Dashboard() {
                     <div 
                       key={idx}
                       onClick={() => !loadingLosers && item?.symbol && handleStockClick(item.symbol)}
-                      className="clickable-row flex items-center justify-between p-2 rounded bg-danger/5 border border-danger/10"
+                      className="clickable-row flex items-center justify-between p-2 rounded bg-danger/5 border border-danger/10 transition-all hover:bg-danger/10"
                     >
                       <div>
                         <p className="text-sm font-semibold">{loadingLosers ? '—' : (item?.symbol || '—')}</p>
                         <p className="text-xs text-muted-foreground">{loadingLosers ? 'Loading…' : (item?.name || '')}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold">{loadingLosers ? '—' : `$${(item?.price ?? 0).toFixed(2)}`}</p>
-                        <p className="text-xs text-danger">{loadingLosers ? '—' : `${(item?.changesPercentage ?? 0).toFixed(2)}%`}</p>
+                        <p className="text-sm font-semibold animate-pulse">{loadingLosers ? '—' : `$${(item?.price ?? 0).toFixed(2)}`}</p>
+                        <p className="text-xs text-danger animate-pulse">{loadingLosers ? '—' : `${(item?.changesPercentage ?? 0).toFixed(2)}%`}</p>
                       </div>
                     </div>
                   ))}
@@ -297,10 +309,16 @@ export function Dashboard() {
             {/* Most Active */}
             <Card className="financial-card hover-lift">
               <CardHeader className="financial-card-header">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-primary" />
-                  Most Active
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-primary" />
+                    Most Active
+                  </CardTitle>
+                  <Badge className="bg-success/10 text-success border-success/20">
+                    <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse mr-1.5"></div>
+                    Live
+                  </Badge>
+                </div>
               </CardHeader>
               <CardContent className="pt-4">
                 <div className="space-y-2">
@@ -308,14 +326,14 @@ export function Dashboard() {
                     <div 
                       key={idx}
                       onClick={() => !loadingActives && item?.symbol && handleStockClick(item.symbol)}
-                      className="clickable-row flex items-center justify-between p-2 rounded bg-primary/5 border border-primary/10"
+                      className="clickable-row flex items-center justify-between p-2 rounded bg-primary/5 border border-primary/10 transition-all hover:bg-primary/10"
                     >
                       <div>
                         <p className="text-sm font-semibold">{loadingActives ? '—' : (item?.symbol || '—')}</p>
                         <p className="text-xs text-muted-foreground">{loadingActives ? 'Loading…' : (item?.name || '')}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold">{loadingActives ? '—' : `$${(item?.price ?? 0).toFixed(2)}`}</p>
+                        <p className="text-sm font-semibold animate-pulse">{loadingActives ? '—' : `$${(item?.price ?? 0).toFixed(2)}`}</p>
                         <p className="text-xs text-primary">{loadingActives ? '—' : `Vol: ${(item?.volume || 0).toLocaleString()}`}</p>
                       </div>
                     </div>
