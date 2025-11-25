@@ -35,12 +35,12 @@ const americanMarkets = ["^GSPC", "^DJI", "^IXIC", "^GSPTSE", "^BVSP"];
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { data: commList = [], isLoading: loadingComm } = useCommodities();
-  const { data: fxList = [], isLoading: loadingFx } = useForexPairs(["EURUSD", "GBPUSD", "USDJPY"]);
-  const { data: indicesList = [], isLoading: loadingIndices } = useIndices();
-  const { data: gainers = [], isLoading: loadingGainers } = useTopMovers('gainers');
-  const { data: losers = [], isLoading: loadingLosers } = useTopMovers('losers');
-  const { data: actives = [], isLoading: loadingActives } = useTopMovers('actives');
+  const { data: commList = [], isLoading: loadingComm } = useCommodities({ realtime: true });
+  const { data: fxList = [], isLoading: loadingFx } = useForexPairs(["EURUSD", "GBPUSD", "USDJPY"], { realtime: true });
+  const { data: indicesList = [], isLoading: loadingIndices } = useIndices({ realtime: true });
+  const { data: gainers = [], isLoading: loadingGainers } = useTopMovers('gainers', { realtime: true });
+  const { data: losers = [], isLoading: loadingLosers } = useTopMovers('losers', { realtime: true });
+  const { data: actives = [], isLoading: loadingActives } = useTopMovers('actives', { realtime: true });
   const { data: economicEvents = [], isLoading: loadingEconomic } = useEconomicCalendar();
   const { data: earningsEvents = [], isLoading: loadingEarnings } = useEarningsCalendar();
   const { data: ipoEvents = [], isLoading: loadingIPO } = useIPOCalendar();
