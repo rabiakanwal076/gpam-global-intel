@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimePrices } from "./use-realtime-prices";
+import { useMemo } from "react";
 
 export type StockQuote = {
   symbol: string;
@@ -18,8 +20,8 @@ export type TopMover = {
   volume?: number;
 };
 
-export function useStockQuotes(symbols: string[], options?: { enabled?: boolean }) {
-  return useQuery({
+export function useStockQuotes(symbols: string[], options?: { enabled?: boolean; realtime?: boolean }) {
+  const query = useQuery({
     queryKey: ["stocks", "quotes", symbols],
     enabled: (options?.enabled ?? true) && symbols.length > 0,
     refetchInterval: 60_000,
@@ -39,10 +41,37 @@ export function useStockQuotes(symbols: string[], options?: { enabled?: boolean 
         }));
     },
   });
+
+  // Enable realtime updates if requested
+  const { prices: realtimePrices } = useRealtimePrices(symbols, options?.realtime ?? false);
+
+  // Merge realtime prices with base data
+  const data = useMemo(() => {
+    if (!query.data) return query.data;
+    if (!options?.realtime || Object.keys(realtimePrices).length === 0) return query.data;
+
+    return query.data.map(quote => {
+      const realtimePrice = realtimePrices[quote.symbol];
+      if (realtimePrice) {
+        return {
+          ...quote,
+          price: realtimePrice.price,
+          change: realtimePrice.change,
+          changesPercentage: realtimePrice.changesPercentage,
+        };
+      }
+      return quote;
+    });
+  }, [query.data, realtimePrices, options?.realtime]);
+
+  return {
+    ...query,
+    data,
+  };
 }
 
-export function useTopMovers(type: "gainers" | "losers" | "actives" = "gainers") {
-  return useQuery({
+export function useTopMovers(type: "gainers" | "losers" | "actives" = "gainers", options?: { realtime?: boolean }) {
+  const query = useQuery({
     queryKey: ["stocks", "top_movers", type],
     refetchInterval: 60_000,
     queryFn: async (): Promise<TopMover[]> => {
@@ -62,6 +91,38 @@ export function useTopMovers(type: "gainers" | "losers" | "actives" = "gainers")
         }));
     },
   });
+
+  // Get symbols for realtime updates
+  const symbols = useMemo(() => 
+    query.data?.map(m => m.symbol) ?? [], 
+    [query.data]
+  );
+
+  const { prices: realtimePrices } = useRealtimePrices(symbols, options?.realtime ?? false);
+
+  // Merge realtime prices with base data
+  const data = useMemo(() => {
+    if (!query.data) return query.data;
+    if (!options?.realtime || Object.keys(realtimePrices).length === 0) return query.data;
+
+    return query.data.map(mover => {
+      const realtimePrice = realtimePrices[mover.symbol];
+      if (realtimePrice) {
+        return {
+          ...mover,
+          price: realtimePrice.price,
+          change: realtimePrice.change,
+          changesPercentage: realtimePrice.changesPercentage,
+        };
+      }
+      return mover;
+    });
+  }, [query.data, realtimePrices, options?.realtime]);
+
+  return {
+    ...query,
+    data,
+  };
 }
 
 export function useSymbolSearch(query: string) {
