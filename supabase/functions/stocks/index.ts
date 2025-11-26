@@ -106,61 +106,68 @@ function getMockIPOCalendar() {
 
 function getMockInsiderTrading() {
   return [
-    { symbol: "AAPL", name: "Timothy Cook", transactionType: "S - Sale", shares: 50000, price: 178.50, value: 8925000, filingDate: "2025-11-23" },
-    { symbol: "MSFT", name: "Satya Nadella", transactionType: "S - Sale", shares: 25000, price: 378.90, value: 9472500, filingDate: "2025-11-22" },
-    { symbol: "GOOGL", name: "Sundar Pichai", transactionType: "P - Purchase", shares: 10000, price: 139.47, value: 1394700, filingDate: "2025-11-21" },
+    { symbol: "AAPL", reportingName: "Timothy Cook", transactionType: "Sale", securitiesTransacted: 50000, price: 178.50, securitiesOwned: 125000, filingDate: "2025-11-23", transactionDate: "2025-11-20", typeOfOwner: "Officer" },
+    { symbol: "MSFT", reportingName: "Satya Nadella", transactionType: "Sale", securitiesTransacted: 25000, price: 378.90, securitiesOwned: 85000, filingDate: "2025-11-22", transactionDate: "2025-11-19", typeOfOwner: "CEO" },
+    { symbol: "GOOGL", reportingName: "Sundar Pichai", transactionType: "Purchase", securitiesTransacted: 10000, price: 139.47, securitiesOwned: 65000, filingDate: "2025-11-21", transactionDate: "2025-11-18", typeOfOwner: "CEO" },
   ];
 }
 
 function getMockMarketNews() {
+  const now = Date.now();
   return [
     { 
-      headline: "Tech Stocks Rally on Strong Earnings", 
-      summary: "Major technology companies posted better-than-expected quarterly results, driving market gains.",
+      symbol: "",
+      title: "Tech Stocks Rally on Strong Earnings", 
+      text: "Major technology companies posted better-than-expected quarterly results, driving market gains.",
       url: "https://marketwatch.com/news/tech-rally",
       image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=300&fit=crop",
-      datetime: Date.now() / 1000 - 3600,
-      source: "MarketWatch"
+      publishedDate: new Date(now - 3600000).toISOString(),
+      site: "MarketWatch"
     },
     { 
-      headline: "Federal Reserve Signals Rate Stability", 
-      summary: "Fed officials indicate rates may remain steady through year-end amid economic uncertainty.",
+      symbol: "",
+      title: "Federal Reserve Signals Rate Stability", 
+      text: "Fed officials indicate rates may remain steady through year-end amid economic uncertainty.",
       url: "https://marketwatch.com/news/fed-rates",
       image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=400&h=300&fit=crop",
-      datetime: Date.now() / 1000 - 7200,
-      source: "Bloomberg"
+      publishedDate: new Date(now - 7200000).toISOString(),
+      site: "Bloomberg"
     },
     { 
-      headline: "Oil Prices Decline on Supply Concerns", 
-      summary: "Crude oil futures dropped as global supply concerns ease following OPEC+ production talks.",
+      symbol: "",
+      title: "Oil Prices Decline on Supply Concerns", 
+      text: "Crude oil futures dropped as global supply concerns ease following OPEC+ production talks.",
       url: "https://marketwatch.com/news/oil-prices",
       image: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=400&h=300&fit=crop",
-      datetime: Date.now() / 1000 - 10800,
-      source: "Reuters"
+      publishedDate: new Date(now - 10800000).toISOString(),
+      site: "Reuters"
     },
     { 
-      headline: "Retail Sales Show Surprising Strength", 
-      summary: "Consumer spending remains robust heading into holiday season, exceeding analyst forecasts.",
+      symbol: "",
+      title: "Retail Sales Show Surprising Strength", 
+      text: "Consumer spending remains robust heading into holiday season, exceeding analyst forecasts.",
       url: "https://marketwatch.com/news/retail-sales",
       image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=300&fit=crop",
-      datetime: Date.now() / 1000 - 14400,
-      source: "CNBC"
+      publishedDate: new Date(now - 14400000).toISOString(),
+      site: "CNBC"
     },
     { 
-      headline: "Emerging Markets Attract Investment", 
-      summary: "Investors pivot to emerging market equities amid developed market volatility.",
+      symbol: "",
+      title: "Emerging Markets Attract Investment", 
+      text: "Investors pivot to emerging market equities amid developed market volatility.",
       url: "https://marketwatch.com/news/emerging-markets",
       image: "https://images.unsplash.com/photo-1611095790444-1dfa35e37b52?w=400&h=300&fit=crop",
-      datetime: Date.now() / 1000 - 18000,
-      source: "Financial Times"
+      publishedDate: new Date(now - 18000000).toISOString(),
+      site: "Financial Times"
     },
     { 
-      headline: "Green Energy Stocks Surge", 
-      summary: "Renewable energy companies see massive gains following new government incentives.",
+      symbol: "",
+      title: "Green Energy Stocks Surge", 
+      text: "Renewable energy companies see massive gains following new government incentives.",
       url: "https://marketwatch.com/news/green-energy",
       image: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&h=300&fit=crop",
-      datetime: Date.now() / 1000 - 21600,
-      source: "MarketWatch"
+      publishedDate: new Date(now - 21600000).toISOString(),
+      site: "MarketWatch"
     },
   ];
 }
@@ -430,7 +437,22 @@ serve(async (req) => {
         const url = `${fmpBase}/insider-trading?page=0&apikey=${FMP_KEY}`;
         const data = await fetchJson(url);
         if (Array.isArray(data) && data.length > 0) {
-          return json(data.slice(0, 10));
+          // Map FMP field names to our expected format
+          const mapped = data.slice(0, 10).map((item: any) => ({
+            symbol: item.symbol || "",
+            filingDate: item.filingDate || "",
+            transactionDate: item.transactionDate || "",
+            reportingName: item.name || item.reportingName || "Unknown",
+            typeOfOwner: item.typeOfOwner || "",
+            transactionType: item.transactionCode === "P" ? "Purchase" : 
+                            item.transactionCode === "S" ? "Sale" : 
+                            item.transactionCode === "G" ? "Gift" :
+                            item.transactionCode || "Unknown",
+            securitiesTransacted: item.share || item.securitiesTransacted || 0,
+            price: item.transactionPrice ?? item.price ?? 0,
+            securitiesOwned: item.securitiesOwned || 0,
+          }));
+          return json(mapped);
         }
       }
       
@@ -443,7 +465,18 @@ serve(async (req) => {
             const url = `${finnhubBase}/stock/insider-transactions?symbol=${symbol}&token=${FINNHUB_KEY}`;
             const data = await fetchJson(url);
             if (data?.data && Array.isArray(data.data)) {
-              results.push(...data.data.slice(0, 2));
+              const mapped = data.data.slice(0, 2).map((item: any) => ({
+                symbol: item.symbol || symbol,
+                filingDate: item.filingDate || "",
+                transactionDate: item.transactionDate || "",
+                reportingName: item.name || "Unknown",
+                typeOfOwner: "",
+                transactionType: item.transactionCode || "Unknown",
+                securitiesTransacted: item.share || 0,
+                price: item.transactionPrice || 0,
+                securitiesOwned: 0,
+              }));
+              results.push(...mapped);
             }
           } catch (e) {
             console.error(`Failed to fetch insider trading for ${symbol}:`, e);
@@ -509,7 +542,17 @@ serve(async (req) => {
         const url = `${fmpBase}/stock_news?page=0&apikey=${FMP_KEY}`;
         const data = await fetchJson(url);
         if (Array.isArray(data) && data.length > 0) {
-          return json(data.slice(0, 10));
+          // FMP returns correct format already, but ensure consistency
+          const mapped = data.slice(0, 10).map((item: any) => ({
+            symbol: item.symbol || "",
+            publishedDate: item.publishedDate || "",
+            title: item.title || "No title",
+            image: item.image || "",
+            site: item.site || "",
+            text: item.text || "",
+            url: item.url || "",
+          }));
+          return json(mapped);
         }
       }
       
@@ -517,7 +560,17 @@ serve(async (req) => {
         const url = `${finnhubBase}/news?category=general&token=${FINNHUB_KEY}`;
         const data = await fetchJson(url);
         if (Array.isArray(data) && data.length > 0) {
-          return json(data.slice(0, 10));
+          // Map Finnhub field names to our expected format
+          const mapped = data.slice(0, 10).map((item: any) => ({
+            symbol: "",
+            publishedDate: item.datetime ? new Date(item.datetime * 1000).toISOString() : "",
+            title: item.headline || "No title",
+            image: item.image || "",
+            site: item.source || "",
+            text: item.summary || "",
+            url: item.url || "",
+          }));
+          return json(mapped);
         }
       }
       
