@@ -10,47 +10,20 @@ import {
   Shield, 
   Fuel, 
   TrendingUp,
+  TrendingDown,
   Download,
   RefreshCw,
   Activity,
   Search,
   Filter,
   BarChart3,
-  Eye,
-  Star,
-  ArrowUpDown
+  Globe,
+  Landmark
 } from "lucide-react";
 import { SimpleChart } from "@/components/ui/simple-chart";
 import { useCommodities, useForexPairs, useIndices } from "@/hooks/use-market";
-
-// Enhanced sample price data with more realistic values
-
-const commoditiesData = [
-  { title: "Gold", value: "$2,047.80", change: -12.30, changePercent: -0.60, unit: "per oz", icon: <Shield className="h-4 w-4" /> },
-  { title: "Silver", value: "$24.56", change: 0.45, changePercent: 1.87, unit: "per oz", icon: <Shield className="h-4 w-4" /> },
-  { title: "Crude Oil", value: "$74.42", change: 2.15, changePercent: 2.98, unit: "per barrel", icon: <Fuel className="h-4 w-4" /> },
-  { title: "Natural Gas", value: "$2.85", change: -0.12, changePercent: -4.05, unit: "per MMBtu", icon: <Fuel className="h-4 w-4" /> },
-  { title: "Copper", value: "$8,450", change: 125, changePercent: 1.50, unit: "per ton", icon: <Shield className="h-4 w-4" /> },
-  { title: "Platinum", value: "$920.50", change: -8.20, changePercent: -0.88, unit: "per oz", icon: <Shield className="h-4 w-4" /> }
-];
-
-const forexData = [
-  { title: "EUR/USD", value: "1.0876", change: -0.0023, changePercent: -0.21, icon: <DollarSign className="h-4 w-4" /> },
-  { title: "GBP/USD", value: "1.2645", change: 0.0034, changePercent: 0.27, icon: <DollarSign className="h-4 w-4" /> },
-  { title: "USD/JPY", value: "149.82", change: 0.45, changePercent: 0.30, icon: <DollarSign className="h-4 w-4" /> },
-  { title: "USD/CNY", value: "7.2345", change: -0.0123, changePercent: -0.17, icon: <DollarSign className="h-4 w-4" /> },
-  { title: "AUD/USD", value: "0.6543", change: 0.0087, changePercent: 1.35, icon: <DollarSign className="h-4 w-4" /> },
-  { title: "USD/CAD", value: "1.3567", change: -0.0098, changePercent: -0.72, icon: <DollarSign className="h-4 w-4" /> }
-];
-
-const stocksData = [
-  { title: "S&P 500", value: "4,567.89", change: 23.45, changePercent: 0.52, icon: <BarChart3 className="h-4 w-4" /> },
-  { title: "NASDAQ", value: "14,234.56", change: -45.23, changePercent: -0.32, icon: <BarChart3 className="h-4 w-4" /> },
-  { title: "Dow Jones", value: "35,678.90", change: 156.78, changePercent: 0.44, icon: <BarChart3 className="h-4 w-4" /> },
-  { title: "FTSE 100", value: "7,456.78", change: 34.56, changePercent: 0.47, icon: <BarChart3 className="h-4 w-4" /> },
-  { title: "DAX", value: "15,890.45", change: -67.89, changePercent: -0.43, icon: <BarChart3 className="h-4 w-4" /> },
-  { title: "Nikkei 225", value: "32,456.78", change: 123.45, changePercent: 0.38, icon: <BarChart3 className="h-4 w-4" /> }
-];
+import { useTopMovers } from "@/hooks/use-stocks";
+import { useSectorPerformance } from "@/hooks/use-market-data";
 
 // Sample chart data for multiple timeframes
 const chartData = {
@@ -81,17 +54,27 @@ export function Prices() {
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
-  const [favorites, setFavorites] = useState<string[]>(['S&P 500', 'Gold', 'EUR/USD']);
 
-  
-  const { data: commoditiesList = [], isLoading: loadingCommodities } = useCommodities();
-  const { data: forexList = [], isLoading: loadingForex } = useForexPairs(undefined);
-  const { data: indicesList = [], isLoading: loadingIndices } = useIndices();
+  // Live data hooks with realtime enabled
+  const { data: commoditiesList = [], isLoading: loadingCommodities } = useCommodities({ realtime: true });
+  const { data: forexList = [], isLoading: loadingForex } = useForexPairs(["EURUSD", "GBPUSD", "USDJPY"], { realtime: true });
+  const { data: indicesList = [], isLoading: loadingIndices } = useIndices({ realtime: true });
+  const { data: gainers = [], isLoading: loadingGainers } = useTopMovers('gainers', { realtime: true });
+  const { data: losers = [], isLoading: loadingLosers } = useTopMovers('losers', { realtime: true });
+  const { data: actives = [], isLoading: loadingActives } = useTopMovers('actives', { realtime: true });
+  const { data: sectorPerf = [], isLoading: loadingSectors } = useSectorPerformance();
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Update lastUpdated when data changes
+  useEffect(() => {
+    if (!loadingCommodities && !loadingIndices && !loadingForex) {
+      setLastUpdated(new Date());
+    }
+  }, [commoditiesList, indicesList, forexList]);
 
   const handleRefresh = () => {
     setLoading(true);
@@ -99,47 +82,31 @@ export function Prices() {
     setTimeout(() => setLoading(false), 1000);
   };
 
-  const toggleFavorite = (asset: string) => {
-    setFavorites(prev => 
-      prev.includes(asset) 
-        ? prev.filter(f => f !== asset)
-        : [...prev, asset]
-    );
-  };
-
   const filteredData = (data: any[]) => {
     return data.filter(item => 
-      (item.title || item.name || item.symbol).toLowerCase().includes(searchTerm.toLowerCase())
+      (item.title || item.name || item.symbol || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
 
   const exportToCSV = () => {
-    // Placeholder for CSV export functionality
     console.log('Exporting to CSV...');
   };
 
+  const commoditiesData = (commoditiesList || []).slice(0, 6).map((x) => ({
+    title: x.name || x.symbol,
+    value: `$${(x.price ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+    change: Number(x.change ?? 0),
+    changePercent: Number(x.changesPercentage ?? 0),
+    icon: <Landmark className="h-4 w-4" />,
+  }));
 
-  const commoditiesData = (commoditiesList || [])
-    .filter((x) => ["Gold", "Silver", "Crude Oil", "Natural Gas", "Copper", "Platinum"].some((k) => (x.name || "").includes(k)))
-    .slice(0, 6)
-    .map((x) => ({
-      title: x.name || x.symbol,
-      value: `$${(x.price ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
-      change: Number(x.change ?? 0),
-      changePercent: Number(x.changesPercentage ?? 0),
-      icon: <Shield className="h-4 w-4" />,
-      unit: undefined,
-    }));
-
-  const forexData = (forexList || [])
-    .filter((x) => ["EURUSD", "GBPUSD", "USDJPY", "USDCNY", "AUDUSD", "USDCAD"].includes(x.symbol))
-    .map((x) => ({
-      title: x.symbol?.replace("USDEUR", "USD/EUR").replace("EURUSD", "EUR/USD").replace("GBPUSD", "GBP/USD").replace("USDJPY", "USD/JPY").replace("USDCNY", "USD/CNY").replace("AUDUSD", "AUD/USD").replace("USDCAD", "USD/CAD"),
-      value: String(x.price ?? 0),
-      change: Number(x.change ?? 0),
-      changePercent: Number(x.changesPercentage ?? 0),
-      icon: <DollarSign className="h-4 w-4" />,
-    }));
+  const forexData = (forexList || []).map((x) => ({
+    title: x.symbol?.replace("EURUSD", "EUR/USD").replace("GBPUSD", "GBP/USD").replace("USDJPY", "USD/JPY"),
+    value: (x.price ?? 0).toFixed(4),
+    change: Number(x.change ?? 0),
+    changePercent: Number(x.changesPercentage ?? 0),
+    icon: <DollarSign className="h-4 w-4" />,
+  }));
 
   const stocksData = (indicesList || []).slice(0, 6).map((i) => ({
     title: i.name || i.symbol,
@@ -252,7 +219,10 @@ export function Prices() {
           <TabsContent value="stocks" className="space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold text-foreground">Stock Market Indices</h3>
-              <Badge className="bg-accent/10 text-accent">Market Hours</Badge>
+              <Badge className="bg-success/10 text-success border-success/20">
+                <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse mr-1.5"></div>
+                Live
+              </Badge>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredData(stocksData).map((stock, index) => (
@@ -264,6 +234,7 @@ export function Prices() {
                   changePercent={stock.changePercent}
                   icon={stock.icon}
                   loading={loading || loadingIndices}
+                  isLive={true}
                 />
               ))}
             </div>
@@ -273,7 +244,10 @@ export function Prices() {
           <TabsContent value="commodities" className="space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold text-foreground">Commodities & Metals</h3>
-              <Badge className="bg-warning/10 text-warning">Spot Prices</Badge>
+              <Badge className="bg-success/10 text-success border-success/20">
+                <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse mr-1.5"></div>
+                Live
+              </Badge>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredData(commoditiesData).map((commodity, index) => (
@@ -284,8 +258,8 @@ export function Prices() {
                   change={commodity.change}
                   changePercent={commodity.changePercent}
                   icon={commodity.icon}
-                  subtitle={commodity.unit}
                   loading={loading || loadingCommodities}
+                  isLive={true}
                 />
               ))}
             </div>
@@ -295,7 +269,10 @@ export function Prices() {
           <TabsContent value="forex" className="space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold text-foreground">Foreign Exchange</h3>
-              <Badge className="bg-success/10 text-success">24/7 Trading</Badge>
+              <Badge className="bg-success/10 text-success border-success/20">
+                <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse mr-1.5"></div>
+                Live
+              </Badge>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredData(forexData).map((forex, index) => (
@@ -307,39 +284,42 @@ export function Prices() {
                   changePercent={forex.changePercent}
                   icon={forex.icon}
                   loading={loading || loadingForex}
+                  isLive={true}
                 />
               ))}
             </div>
           </TabsContent>
         </Tabs>
 
-        {/* Market Performance Summary */}
+        {/* Stock Market Movers */}
         <section className="mt-12 space-y-6">
-          <h2 className="text-2xl font-bold text-foreground">Market Performance Summary</h2>
+          <div className="flex items-center justify-center gap-3">
+            <h2 className="text-2xl font-bold text-foreground">Stock Market Movers</h2>
+            <Badge className="bg-success/10 text-success border-success/20">
+              <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse mr-1.5"></div>
+              Live
+            </Badge>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Top Gainers */}
-            <Card className="financial-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <Card className="financial-card hover-lift">
+              <CardHeader className="financial-card-header">
+                <CardTitle className="flex items-center gap-2 text-lg">
                   <TrendingUp className="h-5 w-5 text-success" />
-                  Top Gainers (24h)
+                  Top Gainers
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { name: "Solana", symbol: "SOL", change: "+9.78%", value: "$98.45" },
-                    { name: "Cardano", symbol: "ADA", change: "+6.12%", value: "$0.52" },
-                    { name: "BNB", symbol: "BNB", change: "+5.60%", value: "$234.89" },
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-success/5 rounded-lg hover:bg-success/10 transition-colors">
+              <CardContent className="pt-4">
+                <div className="space-y-2">
+                  {(loadingGainers ? Array.from({ length: 5 }) : gainers.slice(0, 5)).map((item: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-2 rounded bg-success/5 border border-success/10 transition-all hover:bg-success/10">
                       <div>
-                        <span className="font-medium text-foreground">{item.name}</span>
-                        <p className="text-sm text-muted-foreground">{item.symbol}</p>
+                        <p className="text-sm font-semibold">{loadingGainers ? '—' : (item?.symbol || '—')}</p>
+                        <p className="text-xs text-muted-foreground">{loadingGainers ? 'Loading…' : (item?.name || '')}</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-success font-bold">{item.change}</div>
-                        <div className="text-sm text-muted-foreground">{item.value}</div>
+                        <p className="text-sm font-semibold animate-pulse">{loadingGainers ? '—' : `$${(item?.price ?? 0).toFixed(2)}`}</p>
+                        <p className="text-xs text-success animate-pulse">{loadingGainers ? '—' : `+${(item?.changesPercentage ?? 0).toFixed(2)}%`}</p>
                       </div>
                     </div>
                   ))}
@@ -348,28 +328,24 @@ export function Prices() {
             </Card>
 
             {/* Top Losers */}
-            <Card className="financial-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-danger" />
-                  Top Losers (24h)
+            <Card className="financial-card hover-lift">
+              <CardHeader className="financial-card-header">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <TrendingDown className="h-5 w-5 text-danger" />
+                  Top Losers
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { name: "Avalanche", symbol: "AVAX", change: "-5.50%", value: "$36.78" },
-                    { name: "Natural Gas", symbol: "NG", change: "-4.05%", value: "$2.85" },
-                    { name: "Ethereum", symbol: "ETH", change: "-1.81%", value: "$2,456" },
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-danger/5 rounded-lg hover:bg-danger/10 transition-colors">
+              <CardContent className="pt-4">
+                <div className="space-y-2">
+                  {(loadingLosers ? Array.from({ length: 5 }) : losers.slice(0, 5)).map((item: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-2 rounded bg-danger/5 border border-danger/10 transition-all hover:bg-danger/10">
                       <div>
-                        <span className="font-medium text-foreground">{item.name}</span>
-                        <p className="text-sm text-muted-foreground">{item.symbol}</p>
+                        <p className="text-sm font-semibold">{loadingLosers ? '—' : (item?.symbol || '—')}</p>
+                        <p className="text-xs text-muted-foreground">{loadingLosers ? 'Loading…' : (item?.name || '')}</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-danger font-bold">{item.change}</div>
-                        <div className="text-sm text-muted-foreground">{item.value}</div>
+                        <p className="text-sm font-semibold animate-pulse">{loadingLosers ? '—' : `$${(item?.price ?? 0).toFixed(2)}`}</p>
+                        <p className="text-xs text-danger animate-pulse">{loadingLosers ? '—' : `${(item?.changesPercentage ?? 0).toFixed(2)}%`}</p>
                       </div>
                     </div>
                   ))}
@@ -377,33 +353,92 @@ export function Prices() {
               </CardContent>
             </Card>
 
-            {/* Market Stats */}
-            <Card className="financial-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  Market Statistics
+            {/* Most Active */}
+            <Card className="financial-card hover-lift">
+              <CardHeader className="financial-card-header">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Activity className="h-5 w-5 text-primary" />
+                  Most Active
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-muted/20 rounded-lg">
-                    <span className="text-sm text-muted-foreground">Total Market Cap</span>
-                    <span className="font-semibold text-foreground">$1.7T</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-muted/20 rounded-lg">
-                    <span className="text-sm text-muted-foreground">24h Volume</span>
-                    <span className="font-semibold text-foreground">$89.5B</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-muted/20 rounded-lg">
-                    <span className="text-sm text-muted-foreground">Bitcoin Dominance</span>
-                    <span className="font-semibold text-foreground">49.8%</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-muted/20 rounded-lg">
-                    <span className="text-sm text-muted-foreground">Fear & Greed Index</span>
-                    <span className="font-semibold text-warning">64 (Greed)</span>
-                  </div>
+              <CardContent className="pt-4">
+                <div className="space-y-2">
+                  {(loadingActives ? Array.from({ length: 5 }) : actives.slice(0, 5)).map((item: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-2 rounded bg-primary/5 border border-primary/10 transition-all hover:bg-primary/10">
+                      <div>
+                        <p className="text-sm font-semibold">{loadingActives ? '—' : (item?.symbol || '—')}</p>
+                        <p className="text-xs text-muted-foreground">{loadingActives ? 'Loading…' : (item?.name || '')}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold animate-pulse">{loadingActives ? '—' : `$${(item?.price ?? 0).toFixed(2)}`}</p>
+                        <p className={`text-xs animate-pulse ${(item?.changesPercentage ?? 0) >= 0 ? 'text-success' : 'text-danger'}`}>
+                          {loadingActives ? '—' : `${(item?.changesPercentage ?? 0) >= 0 ? '+' : ''}${(item?.changesPercentage ?? 0).toFixed(2)}%`}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* Sector Performance */}
+        <section className="mt-12 space-y-6">
+          <div className="flex items-center justify-center gap-3">
+            <h2 className="text-2xl font-bold text-foreground">Sector Performance</h2>
+            <Badge className="bg-success/10 text-success border-success/20">
+              <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse mr-1.5"></div>
+              Live
+            </Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {(loadingSectors ? Array.from({ length: 5 }) : sectorPerf).map((item: any, idx: number) => {
+              const change = parseFloat(item?.changesPercentage?.replace('%', '') || '0');
+              return (
+                <Card key={idx} className="financial-card hover-lift">
+                  <CardContent className="pt-6 text-center">
+                    <p className="text-sm text-muted-foreground mb-2">{loadingSectors ? '—' : (item?.sector || '—')}</p>
+                    <p className={`text-2xl font-bold ${change >= 0 ? 'text-success' : 'text-danger'}`}>
+                      {loadingSectors ? '—' : `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Market Statistics */}
+        <section className="mt-12 space-y-6">
+          <h2 className="text-2xl font-bold text-foreground text-center">Market Statistics</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="financial-card">
+              <CardContent className="pt-6 text-center">
+                <Globe className="h-8 w-8 mx-auto mb-2 text-primary" />
+                <p className="text-sm text-muted-foreground">Markets Tracked</p>
+                <p className="text-2xl font-bold text-foreground">150+</p>
+              </CardContent>
+            </Card>
+            <Card className="financial-card">
+              <CardContent className="pt-6 text-center">
+                <Activity className="h-8 w-8 mx-auto mb-2 text-success" />
+                <p className="text-sm text-muted-foreground">Update Frequency</p>
+                <p className="text-2xl font-bold text-foreground">Real-time</p>
+              </CardContent>
+            </Card>
+            <Card className="financial-card">
+              <CardContent className="pt-6 text-center">
+                <BarChart3 className="h-8 w-8 mx-auto mb-2 text-warning" />
+                <p className="text-sm text-muted-foreground">Assets</p>
+                <p className="text-2xl font-bold text-foreground">1000+</p>
+              </CardContent>
+            </Card>
+            <Card className="financial-card">
+              <CardContent className="pt-6 text-center">
+                <TrendingUp className="h-8 w-8 mx-auto mb-2 text-accent" />
+                <p className="text-sm text-muted-foreground">Data Points</p>
+                <p className="text-2xl font-bold text-foreground">24/7</p>
               </CardContent>
             </Card>
           </div>
