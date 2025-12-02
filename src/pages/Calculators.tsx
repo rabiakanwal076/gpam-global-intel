@@ -12,7 +12,9 @@ import {
   RefreshCw,
   ArrowRightLeft,
   Percent,
-  PiggyBank
+  PiggyBank,
+  Shield,
+  Target
 } from "lucide-react";
 
 export function Calculators() {
@@ -38,6 +40,26 @@ export function Calculators() {
   const [exchange1Price, setExchange1Price] = useState("67000");
   const [exchange2Price, setExchange2Price] = useState("67500");
   const [arbitrageProfit, setArbitrageProfit] = useState("500");
+
+  // DCA Calculator State
+  const [dcaInvestment, setDcaInvestment] = useState("500");
+  const [dcaFrequency, setDcaFrequency] = useState("monthly");
+  const [dcaPeriod, setDcaPeriod] = useState("12");
+  const [dcaExpectedReturn, setDcaExpectedReturn] = useState("10");
+  const [dcaResult, setDcaResult] = useState({ total: 6000, invested: 6000, gain: 329.70 });
+
+  // Compound Interest State
+  const [principal, setPrincipal] = useState("10000");
+  const [rate, setRate] = useState("7");
+  const [compoundYears, setCompoundYears] = useState("10");
+  const [compoundFrequency, setCompoundFrequency] = useState("12");
+  const [compoundResult, setCompoundResult] = useState({ final: 20096.61, interest: 10096.61 });
+
+  // Risk Calculator State
+  const [portfolioValue, setPortfolioValue] = useState("100000");
+  const [riskPercent, setRiskPercent] = useState("2");
+  const [stopLoss, setStopLoss] = useState("5");
+  const [riskResult, setRiskResult] = useState({ riskAmount: 2000, positionSize: 40000 });
 
   const currencies = [
     { code: "USD", name: "US Dollar", symbol: "$" },
@@ -77,6 +99,44 @@ export function Calculators() {
     setArbitrageProfit(`$${profit.toFixed(2)} (${profitPercent}%)`);
   };
 
+  const calculateDCA = () => {
+    const investment = parseFloat(dcaInvestment);
+    const periods = parseInt(dcaPeriod);
+    const returnRate = parseFloat(dcaExpectedReturn) / 100;
+    
+    let total = 0;
+    const periodsPerYear = dcaFrequency === "weekly" ? 52 : dcaFrequency === "monthly" ? 12 : 4;
+    const periodRate = returnRate / periodsPerYear;
+    
+    for (let i = 0; i < periods; i++) {
+      total = (total + investment) * (1 + periodRate);
+    }
+    
+    const invested = investment * periods;
+    setDcaResult({ total: parseFloat(total.toFixed(2)), invested, gain: parseFloat((total - invested).toFixed(2)) });
+  };
+
+  const calculateCompound = () => {
+    const p = parseFloat(principal);
+    const r = parseFloat(rate) / 100;
+    const n = parseFloat(compoundFrequency);
+    const t = parseFloat(compoundYears);
+    
+    const finalAmount = p * Math.pow((1 + r/n), n*t);
+    const interest = finalAmount - p;
+    setCompoundResult({ final: parseFloat(finalAmount.toFixed(2)), interest: parseFloat(interest.toFixed(2)) });
+  };
+
+  const calculateRisk = () => {
+    const portfolio = parseFloat(portfolioValue);
+    const risk = parseFloat(riskPercent) / 100;
+    const stop = parseFloat(stopLoss) / 100;
+    
+    const riskAmount = portfolio * risk;
+    const positionSize = riskAmount / stop;
+    setRiskResult({ riskAmount: parseFloat(riskAmount.toFixed(2)), positionSize: parseFloat(positionSize.toFixed(2)) });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -98,11 +158,14 @@ export function Calculators() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="currency" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
-            <TabsTrigger value="currency">Currency Converter</TabsTrigger>
-            <TabsTrigger value="roi">ROI Calculator</TabsTrigger>
-            <TabsTrigger value="cagr">CAGR Calculator</TabsTrigger>
-            <TabsTrigger value="arbitrage">Crypto Arbitrage</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7 gap-1">
+            <TabsTrigger value="currency">Currency</TabsTrigger>
+            <TabsTrigger value="roi">ROI</TabsTrigger>
+            <TabsTrigger value="cagr">CAGR</TabsTrigger>
+            <TabsTrigger value="arbitrage">Arbitrage</TabsTrigger>
+            <TabsTrigger value="dca">DCA</TabsTrigger>
+            <TabsTrigger value="compound">Compound</TabsTrigger>
+            <TabsTrigger value="risk">Risk</TabsTrigger>
           </TabsList>
 
           {/* Currency Converter */}
@@ -116,13 +179,10 @@ export function Calculators() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* From Currency */}
                   <div className="space-y-2">
-                    <Label htmlFor="from-currency">From</Label>
+                    <Label>From</Label>
                     <Select value={fromCurrency} onValueChange={setFromCurrency}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {currencies.map(currency => (
                           <SelectItem key={currency.code} value={currency.code}>
@@ -131,35 +191,17 @@ export function Calculators() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <Input
-                      type="number"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="Amount"
-                    />
+                    <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" />
                   </div>
-
-                  {/* Swap Button */}
                   <div className="flex items-end justify-center">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => {
-                        setFromCurrency(toCurrency);
-                        setToCurrency(fromCurrency);
-                      }}
-                    >
+                    <Button variant="outline" size="icon" onClick={() => { setFromCurrency(toCurrency); setToCurrency(fromCurrency); }}>
                       <RefreshCw className="h-4 w-4" />
                     </Button>
                   </div>
-
-                  {/* To Currency */}
                   <div className="space-y-2">
-                    <Label htmlFor="to-currency">To</Label>
+                    <Label>To</Label>
                     <Select value={toCurrency} onValueChange={setToCurrency}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {currencies.map(currency => (
                           <SelectItem key={currency.code} value={currency.code}>
@@ -175,14 +217,9 @@ export function Calculators() {
                     </div>
                   </div>
                 </div>
-
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">
-                    1 {fromCurrency} = 0.8765 {toCurrency}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Exchange rates updated 5 minutes ago
-                  </p>
+                  <p className="text-sm text-muted-foreground">1 {fromCurrency} = 0.8765 {toCurrency}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Exchange rates updated 5 minutes ago</p>
                 </div>
               </CardContent>
             </Card>
@@ -201,30 +238,15 @@ export function Calculators() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="initial-investment">Initial Investment ($)</Label>
-                      <Input
-                        id="initial-investment"
-                        type="number"
-                        value={initialInvestment}
-                        onChange={(e) => setInitialInvestment(e.target.value)}
-                        placeholder="10000"
-                      />
+                      <Label>Initial Investment ($)</Label>
+                      <Input type="number" value={initialInvestment} onChange={(e) => setInitialInvestment(e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="final-value">Final Value ($)</Label>
-                      <Input
-                        id="final-value"
-                        type="number"
-                        value={finalValue}
-                        onChange={(e) => setFinalValue(e.target.value)}
-                        placeholder="15000"
-                      />
+                      <Label>Final Value ($)</Label>
+                      <Input type="number" value={finalValue} onChange={(e) => setFinalValue(e.target.value)} />
                     </div>
-                    <Button onClick={calculateROI} className="w-full">
-                      Calculate ROI
-                    </Button>
+                    <Button onClick={calculateROI} className="w-full">Calculate ROI</Button>
                   </div>
-                  
                   <div className="space-y-4">
                     <div className="p-6 bg-gradient-card rounded-lg border border-card-border">
                       <div className="text-center">
@@ -254,40 +276,19 @@ export function Calculators() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="beginning-value">Beginning Value ($)</Label>
-                      <Input
-                        id="beginning-value"
-                        type="number"
-                        value={beginningValue}
-                        onChange={(e) => setBeginningValue(e.target.value)}
-                        placeholder="10000"
-                      />
+                      <Label>Beginning Value ($)</Label>
+                      <Input type="number" value={beginningValue} onChange={(e) => setBeginningValue(e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="ending-value">Ending Value ($)</Label>
-                      <Input
-                        id="ending-value"
-                        type="number"
-                        value={endingValue}
-                        onChange={(e) => setEndingValue(e.target.value)}
-                        placeholder="20000"
-                      />
+                      <Label>Ending Value ($)</Label>
+                      <Input type="number" value={endingValue} onChange={(e) => setEndingValue(e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="years">Number of Years</Label>
-                      <Input
-                        id="years"
-                        type="number"
-                        value={years}
-                        onChange={(e) => setYears(e.target.value)}
-                        placeholder="5"
-                      />
+                      <Label>Number of Years</Label>
+                      <Input type="number" value={years} onChange={(e) => setYears(e.target.value)} />
                     </div>
-                    <Button onClick={calculateCAGR} className="w-full">
-                      Calculate CAGR
-                    </Button>
+                    <Button onClick={calculateCAGR} className="w-full">Calculate CAGR</Button>
                   </div>
-                  
                   <div className="space-y-4">
                     <div className="p-6 bg-gradient-card rounded-lg border border-card-border">
                       <div className="text-center">
@@ -317,45 +318,24 @@ export function Calculators() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="crypto-select">Cryptocurrency</Label>
+                      <Label>Cryptocurrency</Label>
                       <Select value={crypto} onValueChange={setCrypto}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          {cryptos.map(coin => (
-                            <SelectItem key={coin} value={coin}>
-                              {coin}
-                            </SelectItem>
-                          ))}
+                          {cryptos.map(coin => <SelectItem key={coin} value={coin}>{coin}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="exchange1">Exchange 1 Price ($)</Label>
-                      <Input
-                        id="exchange1"
-                        type="number"
-                        value={exchange1Price}
-                        onChange={(e) => setExchange1Price(e.target.value)}
-                        placeholder="67000"
-                      />
+                      <Label>Exchange 1 Price ($)</Label>
+                      <Input type="number" value={exchange1Price} onChange={(e) => setExchange1Price(e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="exchange2">Exchange 2 Price ($)</Label>
-                      <Input
-                        id="exchange2"
-                        type="number"
-                        value={exchange2Price}
-                        onChange={(e) => setExchange2Price(e.target.value)}
-                        placeholder="67500"
-                      />
+                      <Label>Exchange 2 Price ($)</Label>
+                      <Input type="number" value={exchange2Price} onChange={(e) => setExchange2Price(e.target.value)} />
                     </div>
-                    <Button onClick={calculateArbitrage} className="w-full">
-                      Calculate Arbitrage
-                    </Button>
+                    <Button onClick={calculateArbitrage} className="w-full">Calculate Arbitrage</Button>
                   </div>
-                  
                   <div className="space-y-4">
                     <div className="p-6 bg-gradient-card rounded-lg border border-card-border">
                       <div className="text-center">
@@ -373,33 +353,205 @@ export function Calculators() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* DCA Calculator */}
+          <TabsContent value="dca">
+            <Card className="financial-card">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <DollarSign className="h-5 w-5 text-primary" />
+                  <span>Dollar Cost Averaging Calculator</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Investment Amount ($)</Label>
+                      <Input type="number" value={dcaInvestment} onChange={(e) => setDcaInvestment(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Frequency</Label>
+                      <Select value={dcaFrequency} onValueChange={setDcaFrequency}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="quarterly">Quarterly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Number of Periods</Label>
+                      <Input type="number" value={dcaPeriod} onChange={(e) => setDcaPeriod(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Expected Annual Return (%)</Label>
+                      <Input type="number" value={dcaExpectedReturn} onChange={(e) => setDcaExpectedReturn(e.target.value)} />
+                    </div>
+                    <Button onClick={calculateDCA} className="w-full">Calculate DCA</Button>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="p-6 bg-gradient-card rounded-lg border border-card-border">
+                      <div className="text-center space-y-4">
+                        <div>
+                          <div className="text-3xl font-bold text-primary">${dcaResult.total.toLocaleString()}</div>
+                          <div className="text-sm text-muted-foreground">Total Value</div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
+                          <div>
+                            <div className="text-lg font-semibold">${dcaResult.invested.toLocaleString()}</div>
+                            <div className="text-xs text-muted-foreground">Total Invested</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-semibold text-success">+${dcaResult.gain.toLocaleString()}</div>
+                            <div className="text-xs text-muted-foreground">Estimated Gain</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      <p>DCA helps reduce the impact of volatility by spreading purchases over time.</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Compound Interest */}
+          <TabsContent value="compound">
+            <Card className="financial-card">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  <span>Compound Interest Calculator</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Principal Amount ($)</Label>
+                      <Input type="number" value={principal} onChange={(e) => setPrincipal(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Annual Interest Rate (%)</Label>
+                      <Input type="number" value={rate} onChange={(e) => setRate(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Time (Years)</Label>
+                      <Input type="number" value={compoundYears} onChange={(e) => setCompoundYears(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Compound Frequency</Label>
+                      <Select value={compoundFrequency} onValueChange={setCompoundFrequency}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Annually</SelectItem>
+                          <SelectItem value="4">Quarterly</SelectItem>
+                          <SelectItem value="12">Monthly</SelectItem>
+                          <SelectItem value="365">Daily</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button onClick={calculateCompound} className="w-full">Calculate</Button>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="p-6 bg-gradient-card rounded-lg border border-card-border">
+                      <div className="text-center space-y-4">
+                        <div>
+                          <div className="text-3xl font-bold text-success">${compoundResult.final.toLocaleString()}</div>
+                          <div className="text-sm text-muted-foreground">Final Amount</div>
+                        </div>
+                        <div className="pt-4 border-t border-border">
+                          <div className="text-lg font-semibold text-primary">+${compoundResult.interest.toLocaleString()}</div>
+                          <div className="text-xs text-muted-foreground">Total Interest Earned</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      <p><strong>Formula:</strong> A = P(1 + r/n)^(nt)</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Risk Calculator */}
+          <TabsContent value="risk">
+            <Card className="financial-card">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  <span>Position Size & Risk Calculator</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Portfolio Value ($)</Label>
+                      <Input type="number" value={portfolioValue} onChange={(e) => setPortfolioValue(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Risk per Trade (%)</Label>
+                      <Input type="number" value={riskPercent} onChange={(e) => setRiskPercent(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Stop Loss (%)</Label>
+                      <Input type="number" value={stopLoss} onChange={(e) => setStopLoss(e.target.value)} />
+                    </div>
+                    <Button onClick={calculateRisk} className="w-full">Calculate Position Size</Button>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="p-6 bg-gradient-card rounded-lg border border-card-border">
+                      <div className="text-center space-y-4">
+                        <div>
+                          <div className="text-3xl font-bold text-primary">${riskResult.positionSize.toLocaleString()}</div>
+                          <div className="text-sm text-muted-foreground">Recommended Position Size</div>
+                        </div>
+                        <div className="pt-4 border-t border-border">
+                          <div className="text-lg font-semibold text-danger">${riskResult.riskAmount.toLocaleString()}</div>
+                          <div className="text-xs text-muted-foreground">Maximum Risk Amount</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground space-y-2">
+                      <p><strong>Risk Management Rule:</strong> Never risk more than 1-2% of your portfolio on a single trade.</p>
+                      <p><strong>Formula:</strong> Position Size = Risk Amount / Stop Loss %</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
 
-        {/* Additional Tools */}
+        {/* Quick Tips */}
         <section className="mt-12 space-y-6">
-          <h2 className="text-2xl font-bold text-foreground">Coming Soon</h2>
+          <h2 className="text-2xl font-bold text-foreground">Financial Tips</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="financial-card opacity-60">
-              <CardContent className="p-6 text-center">
-                <DollarSign className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <h3 className="font-semibold text-foreground mb-1">DCA Calculator</h3>
-                <p className="text-sm text-muted-foreground">Dollar Cost Averaging strategy calculator</p>
+            <Card className="financial-card">
+              <CardContent className="p-6">
+                <Target className="h-8 w-8 text-primary mb-4" />
+                <h3 className="font-semibold text-foreground mb-2">Set Clear Goals</h3>
+                <p className="text-sm text-muted-foreground">Define your investment objectives and time horizon before making financial decisions.</p>
               </CardContent>
             </Card>
-            
-            <Card className="financial-card opacity-60">
-              <CardContent className="p-6 text-center">
-                <TrendingUp className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <h3 className="font-semibold text-foreground mb-1">Compound Interest</h3>
-                <p className="text-sm text-muted-foreground">Calculate compound interest growth</p>
+            <Card className="financial-card">
+              <CardContent className="p-6">
+                <Shield className="h-8 w-8 text-success mb-4" />
+                <h3 className="font-semibold text-foreground mb-2">Manage Risk</h3>
+                <p className="text-sm text-muted-foreground">Never invest more than you can afford to lose. Diversification is key to risk management.</p>
               </CardContent>
             </Card>
-            
-            <Card className="financial-card opacity-60">
-              <CardContent className="p-6 text-center">
-                <Percent className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <h3 className="font-semibold text-foreground mb-1">Risk Calculator</h3>
-                <p className="text-sm text-muted-foreground">Portfolio risk and volatility analysis</p>
+            <Card className="financial-card">
+              <CardContent className="p-6">
+                <TrendingUp className="h-8 w-8 text-accent mb-4" />
+                <h3 className="font-semibold text-foreground mb-2">Stay Consistent</h3>
+                <p className="text-sm text-muted-foreground">Regular investing through DCA can help reduce the impact of market volatility over time.</p>
               </CardContent>
             </Card>
           </div>
