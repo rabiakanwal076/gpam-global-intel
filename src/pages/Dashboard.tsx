@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PriceCard } from "@/components/ui/price-card";
 import { StatCard } from "@/components/ui/stat-card";
-import { SimpleChart } from "@/components/ui/simple-chart";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TrendingUp, Globe, Activity, Fuel, Landmark, TrendingDown, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,13 +19,7 @@ import {
   useSectorPerformance
 } from "@/hooks/use-market-data";
 
-const mockMarketData = [
-  { name: 'Mon', value: 42800 },
-  { name: 'Tue', value: 43200 },
-  { name: 'Wed', value: 43100 },
-  { name: 'Thu', value: 43450 },
-  { name: 'Fri', value: 43250 },
-];
+// Stock market groups by region
 
 // Stock market groups by region
 const asianMarkets = ["^N225", "^HSI", "000001.SS", "^KS11", "^TWII"];
@@ -222,12 +215,39 @@ export function Dashboard() {
 
         {/* Market Performance */}
         <section>
-          <h2 className="text-3xl font-bold text-center mb-6">Market Performance</h2>
-          <Card className="financial-card hover-lift">
-            <CardContent className="pt-6">
-              <SimpleChart data={mockMarketData} dataKey="value" height={300} />
-            </CardContent>
-          </Card>
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <h2 className="text-3xl font-bold">Market Performance</h2>
+            <Badge className="bg-success/10 text-success border-success/20">
+              <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse mr-1.5"></div>
+              Live
+            </Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {(loadingIndices ? Array.from({ length: 3 }) : indicesList).map((item: any, idx: number) => (
+              <Card key={idx} className="financial-card hover-lift">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{loadingIndices ? 'Loading...' : (item?.name || '—')}</p>
+                      <p className="text-2xl font-bold">{loadingIndices ? '—' : (item?.price ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    </div>
+                    <div className={`text-right px-3 py-1 rounded-full ${(item?.changesPercentage ?? 0) >= 0 ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
+                      <p className="text-sm font-semibold animate-pulse">
+                        {loadingIndices ? '—' : `${(item?.changesPercentage ?? 0) >= 0 ? '+' : ''}${(item?.changesPercentage ?? 0).toFixed(2)}%`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="font-mono">{loadingIndices ? '—' : (item?.symbol || '—')}</span>
+                    <span>•</span>
+                    <span className={`${(item?.change ?? 0) >= 0 ? 'text-success' : 'text-danger'}`}>
+                      {loadingIndices ? '—' : `${(item?.change ?? 0) >= 0 ? '+' : ''}${(item?.change ?? 0).toFixed(2)}`}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </section>
 
         {/* Top Movers, Gainers, Losers */}
