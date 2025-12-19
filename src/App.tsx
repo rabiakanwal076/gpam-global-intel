@@ -14,6 +14,7 @@ import { Calculators } from "@/pages/Calculators";
 import { InvestmentTracker } from "@/pages/InvestmentTracker";
 import { ImpactAnalyzer } from "@/pages/ImpactAnalyzer";
 import { AIInsightsBlog } from "@/pages/Blog";
+import { BlogPost } from "@/pages/BlogPost";
 import { NotFound } from "./pages/NotFound";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
